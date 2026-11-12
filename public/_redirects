@@ -1,0 +1,5 @@
+# Cloudflare Pages routing.
+# Every route is a real directory with index.html (trailingSlash: true), so
+# Pages serves them without rewrites. This only needs to handle unknown paths.
+
+/*    /404.html   404
