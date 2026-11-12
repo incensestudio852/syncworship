@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# env — never commit real values
+.env
+.env.local
+.env.*.local
+
+# local dev / test scaffolding (sample PDFs, browser scripts, mock server)
+.mock/
+
+# generated assets copied out of node_modules by scripts/copy-assets.mjs.
+# `npm install` (postinstall) recreates these; committing them adds ~53 MB.
+public/cmaps/
+public/standard_fonts/
+public/wasm/
+public/pdf.worker.min.mjs
+public/tessdata/
+public/tesseract/
+public/tesseract-core/
+
+# macOS
+.DS_Store
