@@ -396,7 +396,7 @@ export default function StagePage() {
             centred — at top-1/2 the two were easy to hit by mistake. */}
         <button
           onClick={() => setShowList((v) => !v)}
-          className="absolute bottom-20 right-0 z-20 grid min-h-[44px] w-9 place-items-center rounded-l-xl border border-r-0 border-[var(--border)] bg-[var(--card)]/95 text-[var(--muted-fg)] shadow-sm backdrop-blur sm:bottom-24"
+          className="absolute bottom-28 right-0 z-20 grid min-h-[44px] w-9 place-items-center rounded-l-xl border border-r-0 border-[var(--border)] bg-[var(--card)]/95 text-[var(--muted-fg)] shadow-sm backdrop-blur sm:bottom-32"
           aria-label="詩歌順序"
         >
           <ListMusic size={16} />
