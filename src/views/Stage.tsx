@@ -33,6 +33,7 @@ import { readListCache, saveListCache } from '@/lib/offlineCache';
 import { getDeviceName, fallbackDeviceName } from '@/lib/deviceName';
 import { hasChords, relativeTime, sortItems } from '@/lib/chords';
 import { Button } from '@/components/ui';
+import { IncomingPushBanner } from '@/components/IncomingPushBanner';
 
 type View = 'sheet' | 'lyrics';
 
@@ -135,7 +136,10 @@ export default function StagePage() {
       const item = items.find((i) => i.song_id === songId);
       setPushingId(item?.id ?? songId);
       const name = getDeviceName() ?? fallbackDeviceName();
+      // Mark it so the follow-effect applies our own push without a banner.
+      selfPushedRef.current.add(songId);
       const { error } = await push(songId, name);
+      if (error) selfPushedRef.current.delete(songId);
       setPushingId(null);
       if (error) {
         toast(error, 'error');
@@ -155,12 +159,49 @@ export default function StagePage() {
   );
   const liveSongId = live?.active_song_id ?? null;
 
+  /**
+   * A remote push no longer yanks the receiver's screen.
+   *
+   * Broadcasts now arrive as an offer: the stage keeps showing what the
+   * receiver is looking at and shows a banner naming the incoming song. They
+   * switch when they choose — so a leader changing the set never interrupts
+   * someone mid-verse on a different device.
+   */
+  const [pending, setPending] = useState<{ songId: string; title: string; by: string } | null>(
+    null,
+  );
+  const selfPushedRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (!liveSongId || liveIndex < 0) return;
-    // A remote push always wins over a manual browse.
-    setIndex(liveIndex);
+    // Our own push applies immediately — we already chose it.
+    if (selfPushedRef.current.has(liveSongId)) {
+      selfPushedRef.current.delete(liveSongId);
+      setIndex(liveIndex);
+      setManual(false);
+      setPending(null);
+      return;
+    }
+    // Already looking at it: nothing to offer.
+    if (current?.song_id === liveSongId) {
+      setPending(null);
+      return;
+    }
+    setPending({
+      songId: liveSongId,
+      title: items[liveIndex]?.songs?.title ?? '',
+      by: live?.pushed_by_name ?? '團隊成員',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveSongId, liveIndex, live?.updated_at]);
+
+  const acceptPending = () => {
+    if (!pending) return;
+    const i = items.findIndex((it) => it.song_id === pending.songId);
+    if (i >= 0) setIndex(i);
     setManual(false);
-  }, [liveSongId, liveIndex]);
+    setPending(null);
+  };
 
   useEffect(() => {
     if (items.length && index > items.length - 1) setIndex(items.length - 1);
@@ -264,7 +305,16 @@ export default function StagePage() {
   const offline = status === 'offline';
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-[var(--bg)]">
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-[var(--bg)]">
+      {pending ? (
+        <IncomingPushBanner
+          title={pending.title}
+          by={pending.by}
+          onAccept={acceptPending}
+          onDismiss={() => setPending(null)}
+        />
+      ) : null}
+
       {/* status strip */}
       <div
         className={`flex h-8 shrink-0 items-center gap-2 px-3 text-[11px] ${
