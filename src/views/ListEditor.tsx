@@ -27,6 +27,7 @@ import { formatDate, relativeTime, sortItems, weekdayZh } from '@/lib/chords';
 import { saveListCache, readListCache } from '@/lib/offlineCache';
 import { getDeviceName, setDeviceName, resolveDeviceName } from '@/lib/deviceName';
 import { DeviceNamePrompt } from '@/components/DeviceNamePrompt';
+import { PushConfirmBanner, type PendingPush } from '@/components/PushConfirmBanner';
 
 export default function ListEditorPage() {
   const router = useRouter();
@@ -40,6 +41,8 @@ export default function ListEditorPage() {
   const [loading, setLoading] = useState(true);
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [pushingId, setPushingId] = useState<string | null>(null);
+  const [pendingPush, setPendingPush] = useState<PendingPush | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [deviceName, setDevice] = useState('');
   const [deleteItem, setDeleteItem] = useState<ListItem | null>(null);
   const [deleteList, setDeleteList] = useState(false);
@@ -243,16 +246,34 @@ export default function ListEditorPage() {
     void persistOrder(next);
   };
 
-  const doPush = async (item: ListItem) => {
+  /**
+   * Tapping 推送 stages the push; it only broadcasts after the user confirms in
+   * the banner. Pushing rewrites every device in the room, so a mis-tap during
+   * a set should be recoverable.
+   */
+  const requestPush = (item: ListItem) => {
+    setPendingPush({
+      songId: item.song_id,
+      title: item.songs?.title ?? '',
+      at: Date.now(),
+    });
+  };
+
+  const confirmPush = async () => {
+    if (!pendingPush) return;
+    const item = items.find((i) => i.song_id === pendingPush.songId);
     const name = resolveDeviceName();
-    setPushingId(item.id);
-    const { error } = await push(item.song_id, name);
+    setConfirming(true);
+    setPushingId(item?.id ?? null);
+    const { error } = await push(pendingPush.songId, name);
+    setConfirming(false);
     setPushingId(null);
     if (error) {
       toast(error, 'error');
       return;
     }
-    toast(`已推送《${item.songs?.title ?? ''}》到台上`, 'success');
+    toast(`已推送《${pendingPush.title}》到台上`, 'success');
+    setPendingPush(null);
   };
 
   if (loading && !list) {
@@ -406,15 +427,11 @@ export default function ListEditorPage() {
                     variant={isLive ? 'secondary' : 'primary'}
                     size="sm"
                     className="!px-2.5"
-                    disabled={pushingId === item.id || status === 'offline'}
-                    onClick={() => void doPush(item)}
+                    disabled={status === 'offline'}
+                    onClick={() => requestPush(item)}
                     aria-label="推送上台"
                   >
-                    {pushingId === item.id ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <Radio size={13} />
-                    )}
+                    <Radio size={13} />
                     推送
                   </Button>
                   <Button
@@ -492,6 +509,16 @@ export default function ListEditorPage() {
         busy={busy}
         onCancel={() => setDeleteList(false)}
         onConfirm={() => void removeList()}
+      />
+
+      <PushConfirmBanner
+        pending={pendingPush}
+        busy={confirming}
+        onConfirm={() => void confirmPush()}
+        onCancel={() => {
+          if (confirming) return;
+          setPendingPush(null);
+        }}
       />
 
       <DeviceNamePrompt

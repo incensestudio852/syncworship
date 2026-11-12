@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   ListMusic,
-  Loader2,
   Maximize2,
   Minimize2,
   Moon,
@@ -32,6 +31,7 @@ import { readListCache, saveListCache } from '@/lib/offlineCache';
 import { getDeviceName, fallbackDeviceName } from '@/lib/deviceName';
 import { hasChords, relativeTime, sortItems } from '@/lib/chords';
 import { Button } from '@/components/ui';
+import { PushConfirmBanner, type PendingPush } from '@/components/PushConfirmBanner';
 
 type View = 'sheet' | 'lyrics';
 
@@ -53,7 +53,8 @@ export default function StagePage() {
   const [isWide, setIsWide] = useState(true);
   const [pageInfo, setPageInfo] = useState({ index: 0, total: 0 });
   const [missing, setMissing] = useState(false);
-  const [pushingId, setPushingId] = useState<string | null>(null);
+  const [pendingPush, setPendingPush] = useState<PendingPush | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const { live, status: liveStatus, justResynced, push } = useLiveState(listId);
   useResyncToast(justResynced);
@@ -127,24 +128,30 @@ export default function StagePage() {
    * The list editor already has this action; doing it here means the leader
    * never has to leave the stage mid-set to change what the team sees.
    */
-  const pushSong = useCallback(
-    async (songId: string) => {
-      if (!songId || status === 'offline') return;
-      const item = items.find((i) => i.song_id === songId);
-      setPushingId(item?.id ?? songId);
-      const name = getDeviceName() ?? fallbackDeviceName();
-      const { error } = await push(songId, name);
-      setPushingId(null);
-      if (error) {
-        toast(error, 'error');
-        return;
-      }
-      toast(`已推送《${item?.songs?.title ?? ''}》到台上`, 'success');
-      setShowList(false);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [push, items, status, toast],
-  );
+  /**
+   * Stage pushes are staged too: the sidebar button opens the confirm banner
+   * rather than changing every device on a single tap.
+   */
+  const pushSong = (songId: string) => {
+    if (!songId || status === 'offline') return;
+    const item = items.find((i) => i.song_id === songId);
+    setPendingPush({ songId, title: item?.songs?.title ?? '', at: Date.now() });
+  };
+
+  const confirmPush = async () => {
+    if (!pendingPush) return;
+    setConfirming(true);
+    const name = getDeviceName() ?? fallbackDeviceName();
+    const { error } = await push(pendingPush.songId, name);
+    setConfirming(false);
+    if (error) {
+      toast(error, 'error');
+      return;
+    }
+    toast(`已推送《${pendingPush.title}》到台上`, 'success');
+    setPendingPush(null);
+    setShowList(false);
+  };
 
   // ---------------- follow the whiteboard ----------------
   const liveIndex = useMemo(
@@ -385,8 +392,8 @@ export default function StagePage() {
                     {/* Push to every device from the stage — same action as the
                         list editor, so the leader never has to leave the stage. */}
                     <button
-                      onClick={() => void pushSong(it.song_id)}
-                      disabled={pushingId === it.id || status === 'offline'}
+                      onClick={() => pushSong(it.song_id)}
+                      disabled={status === 'offline'}
                       aria-label={`推送 ${it.songs?.title ?? ''} 上台`}
                       className={`my-1 mr-1.5 flex shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                         onLive
@@ -394,11 +401,7 @@ export default function StagePage() {
                           : 'bg-[var(--accent)] text-white hover:brightness-110'
                       }`}
                     >
-                      {pushingId === it.id ? (
-                        <Loader2 size={11} className="animate-spin" />
-                      ) : (
-                        <Radio size={11} />
-                      )}
+                      <Radio size={11} />
                       推送
                     </button>
                   </li>
@@ -493,6 +496,16 @@ export default function StagePage() {
           </Button>
         </Link>
       </div>
+
+      <PushConfirmBanner
+        pending={pendingPush}
+        busy={confirming}
+        onConfirm={() => void confirmPush()}
+        onCancel={() => {
+          if (confirming) return;
+          setPendingPush(null);
+        }}
+      />
     </div>
   );
 }
