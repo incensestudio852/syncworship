@@ -8,7 +8,28 @@ import { isConfigured, missingEnvMessage } from '@/lib/supabase';
 import { TopBar } from './TopBar';
 import { ToastProvider } from './Toast';
 
+/**
+ * Registers the offline shell service worker.
+ *
+ * public/sw.js existed but was never registered, so a cold start with no
+ * network showed a browser error instead of the cached app. Registration is
+ * skipped in dev (HMR breaks the cache-first asset strategy).
+ */
+function useServiceWorker() {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') return;
+    if (!('serviceWorker' in navigator)) return;
+    const onLoad = () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+    };
+    if (document.readyState === 'complete') onLoad();
+    else window.addEventListener('load', onLoad, { once: true });
+    return () => window.removeEventListener('load', onLoad);
+  }, []);
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  useServiceWorker();
   if (!isConfigured) return <SetupNeeded />;
 
   return (
