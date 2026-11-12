@@ -1,0 +1,15 @@
+{
+  "name": "敬拜直播",
+  "short_name": "敬拜直播",
+  "description": "教會敬拜詩歌庫與即時同步",
+  "lang": "zh-Hant-HK",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f6f3",
+  "theme_color": "#1e3a5f",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

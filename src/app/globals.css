@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
+}
+
+:root {
+  --bg: #f7f6f3;
+  --card: #ffffff;
+  --soft: #efede8;
+  --fg: #1e2937;
+  --muted-fg: #6b7280;
+  --border: #e2ded6;
+  --accent: #1e3a5f;
+  --accent-soft: #e8edf3;
+  --gold: #c8955a;
+}
+
+.dark {
+  --bg: #0d1117;
+  --card: #151b23;
+  --soft: #1e2630;
+  --fg: #e6e8ea;
+  --muted-fg: #9aa4b1;
+  --border: #26303b;
+  --accent: #7fa6d1;
+  --accent-soft: #1c2836;
+  --gold: #d3a571;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Chord lyrics */
+.chord-seg {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.chord-name {
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  line-height: 1.15;
+  font-weight: 600;
+  color: var(--gold);
+  white-space: pre;
+  min-height: 1.15em;
+  letter-spacing: -0.02em;
+}
+.chord-text {
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.sheet-img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+input[type='text'],
+input[type='date'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+textarea,
+select {
+  font-size: 16px; /* prevents iOS zoom-on-focus */
+}
+
+::selection {
+  background: rgba(200, 149, 90, 0.3);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
