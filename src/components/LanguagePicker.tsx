@@ -66,10 +66,6 @@ export function LanguagePicker({
       </div>
       <p className="mt-1.5 text-[11px] text-[var(--muted-fg)]">
         首次辨識需下載約 {totalMb}MB 語言資料，之後會快取。
-        {value.length === DEFAULT_OCR_LANGS.length &&
-        value.every((v) => DEFAULT_OCR_LANGS.includes(v))
-          ? ' 目前為預設組合。'
-          : ''}
       </p>
     </div>
   );

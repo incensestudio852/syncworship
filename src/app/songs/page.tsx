@@ -2,12 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Music4, Plus, X } from 'lucide-react';
+import { ChevronRight, Music4, Plus, Search, X } from 'lucide-react';
 import { Button, Card, EmptyState, Spinner } from '@/components/ui';
-import { SongSearch, useSongSearch } from '@/components/SongSearch';
+import { useSongSearch } from '@/components/SongSearch';
 import { supabase, type Song } from '@/lib/supabase';
 
 type SortMode = 'recent' | 'title';
+
+/**
+ * Chips kept on the collapsed row. Four is what fits a 390px phone alongside the
+ * 更多 toggle; showing six pushed the toggle off-screen with no way to reach the
+ * remaining tags.
+ */
+const COLLAPSED_TAGS = 4;
 
 export default function SongsPage() {
   const [q, setQ] = useState('');
@@ -15,6 +22,7 @@ export default function SongsPage() {
   const [recent, setRecent] = useState<Song[] | null>(null);
   const [sort, setSort] = useState<SortMode>('recent');
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [showAllTags, setShowAllTags] = useState(false);
 
   const loadRecent = useCallback(async () => {
     const { data } = await supabase()
@@ -29,8 +37,40 @@ export default function SongsPage() {
     void loadRecent();
   }, [loadRecent]);
 
-  const searching = q.trim().length > 0;
-  const base = searching ? (hits as Song[]) : recent;
+  const needle = q.trim().toLowerCase();
+  const searching = needle.length > 0;
+
+  /**
+   * Lyrics search runs client-side over the loaded page of songs.
+   *
+   * A server-side full-text index over Chinese lyrics needs per-character
+   * tokenising, so a single character like 愛 would match nearly everything and
+   * the result list would stop being useful. Keeping it local means it is
+   * instant, needs no migration, and only searches what is already on screen.
+   */
+  const lyricHits = useMemo(() => {
+    if (!searching) return [] as { song: Song; snippet: string }[];
+    const out: { song: Song; snippet: string }[] = [];
+    for (const song of recent ?? []) {
+      const lyrics = song.lyrics ?? '';
+      if (!lyrics) continue;
+      // Chords are marked [G]; strip them before matching so a chord name never
+      // produces a lyrics hit.
+      const plain = lyrics.replace(/\[[^\]]*\]/g, '');
+      const at = plain.toLowerCase().indexOf(needle);
+      if (at < 0) continue;
+      const from = Math.max(0, at - 12);
+      const snippet = plain.slice(from, from + 34).replace(/\s+/g, ' ').trim();
+      out.push({ song, snippet: (from > 0 ? '…' : '') + snippet + '…' });
+    }
+    return out;
+  }, [searching, needle, recent]);
+
+  /** Title matches first, then songs that matched only in the lyrics. */
+  const titleHitIds = new Set(((searching ? hits : []) as Song[]).map((h) => h.id));
+  const base = searching
+    ? ([...(hits as Song[]), ...lyricHits.map((l) => l.song).filter((s2) => !titleHitIds.has(s2.id))] as Song[])
+    : recent;
   // The tag filter applies on top of whichever list is showing, so a search
   // plus a tag narrows rather than replaces.
   const list = activeTag ? (base ?? []).filter((x) => (x.tags ?? []).includes(activeTag)) : base;
@@ -55,7 +95,7 @@ export default function SongsPage() {
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">詩歌庫</h1>
-          <p className="mt-0.5 text-sm text-[var(--muted-fg)]">以歌名或標籤搜尋詩歌、加入新樂譜</p>
+          <p className="mt-0.5 text-sm text-[var(--muted-fg)]">以歌名、歌詞或標籤搜尋詩歌；加入新樂譜</p>
         </div>
         <Link href="/songs/new/">
           <Button variant="primary">
@@ -65,16 +105,36 @@ export default function SongsPage() {
       </div>
 
       <div className="relative">
-        <SongSearch
-          onPick={(s) => {
-            window.location.href = `/songs/detail/?id=${s.id}`;
-          }}
-          placeholder="搜尋歌名或標籤（例：奇異恩典、聖餐）"
+        <Search
+          size={16}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-fg)]"
         />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          inputMode="search"
+          placeholder="搜尋歌名、歌詞或標籤"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] py-2.5 pl-9 pr-9 text-[var(--fg)] outline-none placeholder:text-[var(--muted-fg)]/70 focus:border-[var(--accent)]"
+        />
+        {q ? (
+          <button
+            onClick={() => setQ('')}
+            aria-label="清除"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted-fg)]"
+          >
+            <X size={15} />
+          </button>
+        ) : null}
       </div>
 
       {tags.length ? (
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        <div
+          className={
+            showAllTags
+              ? '-mx-1 flex flex-wrap gap-1.5 px-1 pb-1'
+              : '-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1'
+          }
+        >
           {activeTag ? (
             <button
               onClick={() => setActiveTag(null)}
@@ -83,7 +143,7 @@ export default function SongsPage() {
               <X size={11} /> 清除標籤
             </button>
           ) : null}
-          {tags.map((t) => {
+          {(showAllTags ? tags : tags.slice(0, COLLAPSED_TAGS)).map((t) => {
             const on = activeTag === t.tag;
             return (
               <button
@@ -101,6 +161,27 @@ export default function SongsPage() {
               </button>
             );
           })}
+          {/* Keep the collapsed bar to one row however many tags exist: the most
+              used six stay visible, the rest are one tap away. The active tag is
+              always shown so it can't hide behind the toggle. */}
+          {activeTag && !(showAllTags ? tags : tags.slice(0, COLLAPSED_TAGS)).some((t) => t.tag === activeTag) ? (
+            <button
+              onClick={() => setActiveTag(null)}
+              aria-pressed
+              className="flex min-h-[34px] shrink-0 items-center gap-1 rounded-full border border-[var(--accent)] bg-[var(--accent)] px-3 text-xs font-medium text-white"
+            >
+              {activeTag} <X size={11} />
+            </button>
+          ) : null}
+          {tags.length > COLLAPSED_TAGS ? (
+            <button
+              onClick={() => setShowAllTags((v) => !v)}
+              aria-expanded={showAllTags}
+              className="flex min-h-[34px] shrink-0 items-center gap-1 rounded-full px-2.5 text-xs text-[var(--accent)] hover:bg-[var(--soft)]"
+            >
+              {showAllTags ? '收起' : `+${tags.length - COLLAPSED_TAGS} 更多`}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -179,6 +260,18 @@ export default function SongsPage() {
                     {s.source ? <span>{s.source}</span> : null}
                     {s.tags?.length ? <span>{s.tags.slice(0, 3).join('、')}</span> : null}
                   </p>
+                  {/* Say why this row matched: an unexplained lyrics hit looks
+                      like a broken search. */}
+                  {searching && !titleHitIds.has(s.id) ? (
+                    <p className="mt-1 flex items-start gap-1 text-[11px] text-[var(--accent)]">
+                      <span className="shrink-0 rounded bg-[var(--accent-soft)] px-1 text-[10px]">
+                        歌詞
+                      </span>
+                      <span className="truncate">
+                        {lyricHits.find((l) => l.song.id === s.id)?.snippet}
+                      </span>
+                    </p>
+                  ) : null}
                 </div>
                 <ChevronRight size={16} className="shrink-0 text-[var(--muted-fg)]" />
               </Link>
