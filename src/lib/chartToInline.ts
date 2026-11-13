@@ -20,6 +20,8 @@
  *      If column widths don't line up we bail out rather than guess.
  */
 
+import { parseSection } from './sections';
+
 export type SheetKind = 'chord_chart' | 'lead_sheet' | 'lyrics_only';
 
 export type ConvertResult = {
@@ -343,8 +345,11 @@ export function convertChartToInline(raw: string): ConvertResult {
       out.push('');
       continue;
     }
-    if (isSectionHeader(trimmed)) {
-      out.push(`【${trimmed.replace(/[()（）]/g, '').trim()}】`);
+    // Section headers become canonical markers, e.g. "(Chorus)" -> [Chorus],
+    // so the stage can render them as chips and the flow builder can offer them.
+    const section = parseSection(trimmed);
+    if (section) {
+      out.push(`[${section.label}]`);
       continue;
     }
 
