@@ -42,7 +42,8 @@ export type Song = {
   sheet_kind?: string | null;
   /** Defaults copied into a setlist entry when the song is added. */
   tempo?: number | null;
-  dynamic?: number | null;
+  /** Default/opening intensity; may be a range like '5-7'. */
+  dynamic?: string | null;
   flow?: FlowStep[] | null;
   created_at: string;
   updated_at: string;
@@ -66,11 +67,19 @@ export type WorshipList = {
   updated_at: string;
 };
 
-/** One section of an arrangement, e.g. { section: 'C', count: 3 }. */
-export type FlowStep = { section: string; count?: number };
-
-/** Remarks bound to a flow section, keyed by section id. */
-export type FlowNotes = Record<string, string>;
+/**
+ * One row of the arrangement, e.g. { section: 'C', count: 3, dynamic: '3',
+ * remark: 'Accent on the first beat' }.
+ *
+ * `dynamic` is text because real charts use ranges ("5-7") as well as single
+ * values ("8").
+ */
+export type FlowStep = {
+  section: string;
+  count?: number;
+  dynamic?: string;
+  remark?: string;
+};
 
 export type ListItem = {
   id: string;
@@ -84,9 +93,8 @@ export type ListItem = {
   transition?: string | null;
   transition_note?: string | null;
   /** Intensity 1-10 (1-3 quiet, 4-6 building, 7-10 full). */
-  dynamic?: number | null;
+  dynamic?: string | null;
   flow?: FlowStep[] | null;
-  flow_notes?: FlowNotes | null;
   sort_order: number;
   notes: string | null;
   updated_at: string;

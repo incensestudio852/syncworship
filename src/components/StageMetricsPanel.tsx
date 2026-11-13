@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import type { FlowNotes, ListItem } from '@/lib/supabase';
+import type { ListItem } from '@/lib/supabase';
 import { dynamicBand, flowLabel, keyLabel, transitionLabel } from '@/lib/setlist';
 
 /**
@@ -27,13 +27,16 @@ export function StageMetricsPanel({
   const dyn = item.dynamic ?? item.songs?.dynamic ?? null;
   const band = dynamicBand(dyn);
   const flow = item.flow ?? [];
-  const notes: FlowNotes = item.flow_notes ?? {};
   const transition = transitionLabel(item.transition);
 
-  const rows = flow.map((step, i) => {
-    const key = `${step.section}${step.count && step.count > 1 ? step.count : ''}`;
-    return { key, label: step.section, count: step.count ?? 1, note: notes[key] ?? '', i };
-  });
+  // Each row carries its own intensity and remark, matching the flow sheet.
+  const rows = flow.map((step, i) => ({
+    key: `${step.section}${step.count && step.count > 1 ? step.count : ''}`,
+    dynamic: step.dynamic ?? '',
+    note: step.remark ?? '',
+    band: dynamicBand(step.dynamic),
+    i,
+  }));
 
   return (
     <div
@@ -81,16 +84,16 @@ export function StageMetricsPanel({
           <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--muted-fg)]">
             段落流程
           </p>
-          <p className="mt-0.5 font-mono text-[11px] text-[var(--fg)]">{flowLabel(flow)}</p>
           <ul className="mt-1 space-y-0.5">
-            {rows
-              .filter((r) => r.note)
-              .map((r) => (
-                <li key={`${r.key}-${r.i}`} className="flex gap-1.5 text-[11px]">
-                  <span className="w-12 shrink-0 font-mono text-[var(--muted-fg)]">{r.key}</span>
-                  <span className="min-w-0 flex-1 text-[var(--fg)]">{r.note}</span>
-                </li>
-              ))}
+            {rows.map((r) => (
+              <li key={`${r.key}-${r.i}`} className="flex items-start gap-1.5 text-[11px]">
+                <span className="w-11 shrink-0 font-mono text-[var(--muted-fg)]">{r.key}</span>
+                <span className={`w-7 shrink-0 text-center font-mono ${r.band.text}`}>
+                  {r.dynamic}
+                </span>
+                <span className="min-w-0 flex-1 text-[var(--fg)]">{r.note}</span>
+              </li>
+            ))}
           </ul>
         </div>
       ) : null}
