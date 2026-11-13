@@ -31,14 +31,29 @@ export type LookupResult =
   | { status: 'error'; message: string };
 
 /**
- * CantonHymn slugs are the title percent-encoded ONCE.
+ * Candidate slugs for a title, most likely first.
  *
- * The proxy decodes `slug` back to the raw title (URL.searchParams does this),
- * so the caller must not double-encode: encoding here AND again at the call
- * site turned "%E5%A4%A7" into "%25E5%25A4%25A7" and every lookup 404'd.
+ * Chinese titles are their own slug ("大山為我挪開" -> percent-encoded title).
+ * Latin titles are NOT: the site transliterates to lowercase-hyphenated
+ * ("Warrior Bride" lives at /song/warrior-bride/), so the literal title 404s.
+ * Both shapes are tried in order; a hit on any of them stops the search.
  */
-export function slugForTitle(title: string): string {
-  return title.trim();
+export function slugCandidates(title: string): string[] {
+  const t = title.trim();
+  const out = [t];
+
+  // Lowercase, hyphens for whitespace and punctuation — the observed Latin form.
+  const slugged = t
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/['’"]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^\p{Script=Han}a-z0-9-]/gu, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  if (slugged && slugged !== t) out.push(slugged);
+
+  return out;
 }
 
 /**
@@ -55,33 +70,37 @@ export function canLookup(title: string): boolean {
 export async function fetchLyrics(title: string, signal?: AbortSignal): Promise<LookupResult> {
   if (!canLookup(title)) return { status: 'not_found' };
 
-  let res: Response;
-  try {
-    // Single encode: the raw title is encoded exactly once for the query.
-    res = await fetch(`/api/cantonhymn?slug=${encodeURIComponent(slugForTitle(title))}`, { signal });
-  } catch (e) {
-    if ((e as Error).name === 'AbortError') return { status: 'error', message: '已取消' };
-    return { status: 'error', message: '無法連線，請檢查網絡。' };
+  // Try each slug shape. A 404 just means "try the next spelling"; a network or
+  // upstream error is reported immediately so a real outage isn't mistaken for
+  // a missing song.
+  for (const slug of slugCandidates(title)) {
+    let res: Response;
+    try {
+      res = await fetch(`/api/cantonhymn?slug=${encodeURIComponent(slug)}`, { signal });
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return { status: 'error', message: '已取消' };
+      return { status: 'error', message: '無法連線，請檢查網絡。' };
+    }
+
+    if (res.status === 404) continue;
+
+    let body: unknown;
+    try {
+      body = await res.json();
+    } catch {
+      return { status: 'error', message: '回應格式有誤。' };
+    }
+
+    if (!res.ok) {
+      const err = (body as { error?: string })?.error ?? 'unknown';
+      return { status: 'error', message: `查詢失敗（${err}）。` };
+    }
+
+    const song = body as CantonHymnSong;
+    if (song?.lyrics?.trim()) return { status: 'found', song };
   }
 
-  if (res.status === 404) return { status: 'not_found' };
-
-  let body: unknown;
-  try {
-    body = await res.json();
-  } catch {
-    return { status: 'error', message: '回應格式有誤。' };
-  }
-
-  if (!res.ok) {
-    const err = (body as { error?: string })?.error ?? 'unknown';
-    return { status: 'error', message: `查詢失敗（${err}）。` };
-  }
-
-  const song = body as CantonHymnSong;
-  if (!song?.lyrics?.trim()) return { status: 'not_found' };
-
-  return { status: 'found', song };
+  return { status: 'not_found' };
 }
 
 /**
