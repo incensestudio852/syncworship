@@ -5,114 +5,78 @@
 <title>Sync Worship 總覽</title>
 <link rel="stylesheet" href="base.css" />
 <style>
-  .hero{display:grid; grid-template-columns:1fr 372px; gap:44px; align-items:start;}
-  .hero{align-items:stretch;}
-  .hero .phone{align-self:stretch; display:flex; flex-direction:column; }
-  .hero .phone img{object-fit:cover; object-position:top; flex:1; min-height:0; height:100%;}
-  .flow{display:flex; gap:10px; margin-top:34px; align-items:stretch;}
-  .step{
-    flex:1; background:var(--card); border:1px solid var(--line); border-radius:12px;
-    padding:14px 15px; position:relative;
-  }
-  .step .n{
-    font-size:11.5px; font-weight:700; color:var(--gold); letter-spacing:.1em;
-  }
-  .step b{display:block; font-size:15px; margin:5px 0 6px;}
-  .step p{font-size:12.5px; color:var(--muted); line-height:1.5;}
-  .arrow{display:grid; place-items:center; color:var(--gold); font-size:18px; flex:none;}
+  .hero{display:grid; grid-template-columns:1fr 430px; gap:56px; margin-top:34px; align-items:start;}
+  .flow{display:flex; gap:10px; align-items:stretch;}
+  .step{flex:1; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:22px 22px;}
+  .step .n{font-size:14px; font-weight:700; color:var(--gold); letter-spacing:.1em;}
+  .step b{display:block; font-size:24px; margin:8px 0 9px;}
+  .step p{font-size:18px; color:var(--muted); line-height:1.6;}
+  .arw{display:grid; place-items:center; color:var(--gold); font-size:22px; flex:none;}
+  .pages{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:40px;}
+  .pg{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px 19px;}
+  .pg span{font-size:13px; font-weight:700; color:var(--gold); letter-spacing:.1em;}
+  .pg b{display:block; font-size:20px; margin:5px 0 4px;}
+  .pg p{font-size:16px; color:var(--muted); line-height:1.5;}
 
-  .facts{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:22px;}
-  .fact{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:13px 14px;}
-  .fact b{display:block; font-size:15px; color:var(--accent); margin-bottom:4px;}
-  .fact span{font-size:12px; color:var(--muted); line-height:1.45;}
-
-  .feat{margin-top:38px;}
-  .feat h2{font-size:19px; font-weight:650; margin-bottom:16px;}
-  .cols{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
-  .f{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 16px;}
-  .f .h{display:flex; align-items:center; gap:7px; margin-bottom:6px;}
-  .f .dot{width:7px; height:7px; border-radius:50%; background:var(--gold); flex:none;}
-  .f b{font-size:14.5px; font-weight:650;}
-  .f p{font-size:12.5px; color:var(--muted); line-height:1.55;}
-  .f code{font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--accent);}
-
-  .phone{
-    position:relative; border-radius:22px; overflow:hidden; background:#fff;
-    border:8px solid #1b1b1e; box-shadow:0 16px 40px rgba(20,30,50,.15);
-  }
+  .phone{position:relative; border-radius:24px; overflow:hidden; background:#fff;
+         border:8px solid #1b1b1e; box-shadow:0 16px 40px rgba(20,30,50,.15);}
   .phone img{display:block; width:100%;}
-  .tag{
-    position:absolute; left:14px; bottom:14px; background:rgba(30,58,95,.92); color:#fff;
-    font-size:11.5px; padding:5px 10px; border-radius:999px; backdrop-filter:blur(4px);
-  }
 </style>
 </head>
 <body>
 
+<div class="mast">
+  <span class="mark">Sync Worship</span>
+  <span class="tag">一同敬拜 · 同步睇譜</span>
+</div>
+
+<h1>一部手機推歌，<br />全隊即刻<b>睇到同一頁</b>。</h1>
+<p class="lead">
+  敬拜隊共用一個帳號，唔使逐部裝置登入。邊個推邊首歌，其他人嘅畫面就跟住跳，
+  台上台下睇嘅永遠係同一份譜。
+</p>
+
 <div class="hero">
   <div>
-    <div class="kicker">Sync Worship · 總覽</div>
-    <h1>一部裝置推送，<br />全隊<em>同步睇譜</em>。</h1>
-    <p class="lead">
-      敬拜隊共用一個帳號。任何一部裝置推歌上台，其餘裝置立即跟隨。
-      樂譜、歌詞、和弦與段落流程都顯示在同一個畫面，聚會時不必再傳紙本、也不必各自翻頁。
-    </p>
-
     <div class="flow">
       <div class="step">
-        <div class="n">STEP 1</div>
-        <b>建立清單</b>
-        <p>從詩歌庫挑歌，排好次序與過場。</p>
+        <div class="n">第一步</div>
+        <b>排好清單</b>
+        <p>由詩歌庫挑歌，拖一拖就調好次序。</p>
       </div>
-      <div class="arrow">›</div>
+      <div class="arw">›</div>
       <div class="step">
-        <div class="n">STEP 2</div>
-        <b>推歌上台</b>
-        <p>按推送，全隊同時收到。</p>
+        <div class="n">第二步</div>
+        <b>撳一下推送</b>
+        <p>全隊同時收到，唔使再逐個傳檔案。</p>
       </div>
-      <div class="arrow">›</div>
+      <div class="arw">›</div>
       <div class="step">
-        <div class="n">STEP 3</div>
-        <b>同步敬拜</b>
-        <p>各裝置跟隨同一首歌與同一頁。</p>
+        <div class="n">第三步</div>
+        <b>一齊唱</b>
+        <p>樂譜、歌詞、和弦都喺同一個畫面。</p>
       </div>
     </div>
 
-    <div class="facts">
-      <div class="fact"><b>1 個帳號</b><span>全隊共用，免逐個開戶</span></div>
-      <div class="fact"><b>6 種語言</b><span>歌詞辨識可選繁中、簡中、English 等</span></div>
-      <div class="fact"><b>離線可讀</b><span>訊號不穩仍顯示已快取的樂譜</span></div>
+    <div class="box" style="margin-top:38px; padding:24px 26px">
+      <b>一個帳號，全隊共用</b>
+      <p>樂譜上傳一次，以後都用得着。聚會場地收唔到訊號，都照樣睇到已經開過嘅樂譜。</p>
+    </div>
+
+    <div class="pages">
+      <div class="pg"><span>02</span><b>敬拜清單</b><p>排歌、轉 Key、推送上台</p></div>
+      <div class="pg"><span>03</span><b>詩歌庫</b><p>上傳樂譜，一個欄搵晒</p></div>
+      <div class="pg"><span>04</span><b>舞台模式</b><p>全螢幕睇譜，同步跟隨</p></div>
     </div>
   </div>
 
-  <div class="phone">
-    <img src="../s3_stage.png" alt="舞台模式" />
-    <span class="tag">舞台模式 · 即時同步</span>
-  </div>
-</div>
-
-<div class="feat">
-  <h2>四頁導覽</h2>
-  <div class="cols">
-    <div class="f">
-      <div class="h"><span class="dot"></span><b>第 2 頁 · 敬拜清單</b></div>
-      <p>編排程序、設定調性與段落，並推送到台上。</p>
-    </div>
-    <div class="f">
-      <div class="h"><span class="dot"></span><b>第 3 頁 · 詩歌庫</b></div>
-      <p>上傳樂譜、自動辨識歌詞和弦，一個欄位搜遍全庫。</p>
-    </div>
-    <div class="f">
-      <div class="h"><span class="dot"></span><b>第 4 頁 · 舞台模式</b></div>
-      <p>全螢幕樂譜、段落指標、縮放與離線快取。</p>
+  <div>
+    <div class="shotcap"><span class="pill">舞台模式</span>即時同步睇譜</div>
+    <div class="phone">
+      <img src="../s3_stage.png" alt="舞台模式" />
     </div>
   </div>
 </div>
-
-<footer>
-  <div>建議在「設定」為每部裝置命名，推送時便會顯示「由 ＿＿ 推送」。</div>
-  <div class="brand"><b>Sync Worship</b>敬拜直播 · 即時同步</div>
-</footer>
 
 </body>
 </html>
