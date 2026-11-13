@@ -1,7 +1,8 @@
 'use client';
 
+import { ArrowDown } from 'lucide-react';
 import type { ListItem } from '@/lib/supabase';
-import { dynamicBand, flowLabel, keyLabel } from '@/lib/setlist';
+import { dynamicBand, keyLabel } from '@/lib/setlist';
 
 /**
  * Compact live metrics, floating above the stage's list toggle.
@@ -28,11 +29,19 @@ export function StageMetricsPill({
   onOpenDetails: () => void;
 }) {
   const tempo = item.tempo ?? item.songs?.tempo ?? null;
-  // The flow's first row usually sets the tone; fall back to the song-level
-  // value for songs saved before flows carried their own dynamic.
-  const dyn = item.flow?.find((f) => f.dynamic)?.dynamic ?? item.dynamic ?? null;
-  const band = dynamicBand(dyn);
-  const flow = flowLabel(item.flow);
+
+  /**
+   * Flow rows, each with its own dynamic.
+   *
+   * The pill mirrors the arrangement sheet: one line per section, with its
+   * intensity on the right and an arrow showing the order, so the leader can
+   * see where the song is heading without opening anything.
+   */
+  const rows = (item.flow ?? []).map((step) => ({
+    label: `${step.section}${step.count && step.count > 1 ? `x${step.count}` : ''}`,
+    dynamic: step.dynamic ?? '',
+    band: dynamicBand(step.dynamic),
+  }));
 
   if (hidden) {
     return (
@@ -73,19 +82,24 @@ export function StageMetricsPill({
             </span>
           ) : null}
 
-          {dyn ? (
-            <span className={`flex items-center gap-1 text-[10px] leading-tight ${band.text}`}>
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${band.swatch}`} />
-              動態 {dyn}
-              {band.label ? <span className="opacity-80">· {band.label}</span> : null}
+          {/* one section per line: name, then its dynamic, arrow to the next */}
+          <span className="max-h-[88px] w-full overflow-y-auto">
+          {rows.map((r, i) => (
+            <span key={i} className="flex w-full items-center gap-1 leading-tight">
+              <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--muted-fg)]">
+                {r.label}
+              </span>
+              {r.dynamic ? (
+                <span className={`shrink-0 font-mono text-[10px] ${r.band.text}`}>
+                  {r.dynamic}
+                </span>
+              ) : null}
+              {i < rows.length - 1 ? (
+                <ArrowDown size={9} className="shrink-0 text-[var(--muted-fg)]/50" />
+              ) : null}
             </span>
-          ) : null}
-
-          {flow ? (
-            <span className="w-full truncate font-mono text-[10px] leading-tight text-[var(--muted-fg)]">
-              {flow}
-            </span>
-          ) : null}
+          ))}
+          </span>
         </button>
         <button
           onClick={onToggleHidden}
