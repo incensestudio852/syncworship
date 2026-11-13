@@ -196,16 +196,36 @@ function NewSongForm() {
     [],
   );
 
-  const onFile = useCallback(
-    async (file: File) => {
+  /**
+   * Handle one or more chosen files.
+   *
+   * Several files usually mean one song spread over pages (or a chord chart
+   * plus a full score), so their pages are appended in the order chosen rather
+   * than replacing each other. Filename metadata is taken from the FIRST file
+   * only — the second file's name says nothing about the song.
+   */
+  const onFiles = useCallback(
+    async (files: File[]) => {
       setError(null);
-      const sizeErr = checkSize(file);
-      if (sizeErr) {
-        setError(sizeErr);
-        return;
+      if (!files.length) return;
+
+      // Check every file up front so a single oversized one fails clearly,
+      // before any rendering work starts.
+      for (const f of files) {
+        const sizeErr = checkSize(f);
+        if (sizeErr) {
+          setError(`${f.name}：${sizeErr}`);
+          return;
+        }
+        if (!isPdf(f) && !isImage(f)) {
+          setError(`${f.name}：只支援 JPG、PNG 或 PDF 檔案。`);
+          return;
+        }
       }
 
-      // Filename prefill (non-authoritative; everything is user-confirmable)
+      // Filename prefill (non-authoritative; everything is user-confirmable).
+      // Only the first file is consulted.
+      const file = files[0];
       const parsed = parseFilename(file.name);
       const flagged = new Set<string>();
       if (parsed.title && !titleRef.current) {
@@ -232,23 +252,30 @@ function NewSongForm() {
 
       setStage('rendering');
       try {
-        let blobs: Blob[] = [];
-        if (isPdf(file)) {
-          const res = await renderPdfToWebp(file, (done, total) => setProgress({ done, total }));
-          blobs = res.pages;
-          if (res.truncated) setTruncateInfo({ pages: res.pages, total: res.totalPages });
-        } else if (isImage(file)) {
-          blobs = [await fileToWebp(file)];
-        } else {
-          setError('只支援 JPG、PNG 或 PDF 檔案。');
-          setStage('idle');
-          return;
+        const blobs: Blob[] = [];
+        let truncatedTotal = 0;
+
+        for (const [i, f] of files.entries()) {
+          setProgress({ done: i, total: files.length });
+          if (isPdf(f)) {
+            const res = await renderPdfToWebp(f, (done, total) =>
+              // Report the file being rendered, not a fake global page count.
+              setProgress({ done: i * total + done, total: files.length * total }),
+            );
+            blobs.push(...res.pages);
+            if (res.truncated) truncatedTotal += res.totalPages - res.pages.length;
+          } else {
+            blobs.push(await fileToWebp(f));
+          }
         }
 
         if (!blobs.length) {
           setError('檔案沒有可用的頁面。');
           setStage('idle');
           return;
+        }
+        if (truncatedTotal > 0) {
+          setTruncateInfo({ pages: blobs, total: blobs.length + truncatedTotal });
         }
 
         const ready = blobs.map((b, i) => ({
@@ -420,7 +447,7 @@ function NewSongForm() {
         </div>
         <LanguagePicker value={ocrLangs} onChange={updateLangs} disabled={busy} />
         <div className="mt-3">
-          <Label>樂譜檔案（JPG / PNG / PDF）</Label>
+          <Label>樂譜檔案（JPG / PNG / PDF，可多選）</Label>
         </div>
         <label
           className={`mt-1 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors ${
@@ -429,17 +456,18 @@ function NewSongForm() {
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
-            const f = e.dataTransfer.files?.[0];
-            if (f) void onFile(f);
+            const list = Array.from(e.dataTransfer.files ?? []);
+            if (list.length) void onFiles(list);
           }}
         >
           <input
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
             className="hidden"
+            multiple
             onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void onFile(f);
+              const list = Array.from(e.target.files ?? []);
+              if (list.length) void onFiles(list);
               e.currentTarget.value = '';
             }}
           />
@@ -453,9 +481,9 @@ function NewSongForm() {
           ) : (
             <>
               <Upload size={22} className="text-[var(--muted-fg)]" />
-              <span className="text-sm font-medium">點擊選擇或拖放檔案</span>
+              <span className="text-sm font-medium">點擊選擇或拖放檔案（可一次選多個）</span>
               <span className="text-[11px] text-[var(--muted-fg)]">
-                上限 10MB · PDF 最多 {CFG.PDF_MAX_PAGES} 頁 · 自動壓縮為 WebP
+                每個檔案上限 10MB · 多檔會依選擇順序合併為同一首歌的頁面
               </span>
             </>
           )}
