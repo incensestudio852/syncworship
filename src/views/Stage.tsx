@@ -616,6 +616,7 @@ export default function StagePage() {
             {plan === 'sheet' && pageInfo.total > 1
               ? ` · 第 ${pageInfo.index + 1}/${pageInfo.total} 頁`
               : ''}
+            {current?.notes ? ` · ${current.notes}` : ''}
           </p>
         </div>
 

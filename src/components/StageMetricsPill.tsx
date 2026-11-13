@@ -1,7 +1,7 @@
 'use client';
 
 import type { ListItem } from '@/lib/supabase';
-import { dynamicBand, keyLabel } from '@/lib/setlist';
+import { dynamicBand, keyLabel, transitionLabel } from '@/lib/setlist';
 
 /**
  * Compact live metrics, floating above the stage's list toggle.
@@ -39,6 +39,10 @@ export function StageMetricsPill({
    * intensity on the right and an arrow showing the order, so the leader can
    * see where the song is heading without opening anything.
    */
+  // How this song hands over to the next one — the last thing a leader needs to
+  // know before the song ends, so it belongs at the end of the same pill.
+  const transition = transitionLabel(item.transition);
+
   const rows = (item.flow ?? []).map((step) => ({
     label: `${step.section}${step.count && step.count > 1 ? `x${step.count}` : ''}`,
     dynamic: step.dynamic ?? '',
@@ -99,6 +103,16 @@ export function StageMetricsPill({
             </span>
           ))}
           </span>
+
+          {transition ? (
+            <span className="flex w-full items-center gap-1 border-t border-[var(--border)] pt-1 leading-tight">
+              <span className="shrink-0 text-[9px] text-[var(--muted-fg)]">接</span>
+              <span className="min-w-0 truncate text-[10px] text-[var(--gold)]">
+                {transition}
+                {item.transition_note ? ` · ${item.transition_note}` : ''}
+              </span>
+            </span>
+          ) : null}
         </button>
         <button
           onClick={onToggleHidden}
