@@ -384,7 +384,7 @@ export default function ListEditorPage() {
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => onDrop(index)}
-                className={`group flex items-center gap-2 rounded-xl border bg-[var(--card)] px-2 py-2.5 transition-colors ${
+                className={`group flex items-start gap-2 rounded-xl border bg-[var(--card)] px-2 py-2.5 transition-colors ${
                   isLive ? 'border-[var(--gold)]' : 'border-[var(--border)]'
                 }`}
               >
@@ -432,26 +432,30 @@ export default function ListEditorPage() {
                   />
                 </div>
 
-                <div className="flex shrink-0 items-center">
+                {/* Actions sit in a narrow TOP-ALIGNED column so the row's
+                    remaining width belongs to the flow editor below it. On
+                    phones the label stacks under the icon to keep the column
+                    ~56px rather than ~90px. */}
+                <div className="flex shrink-0 flex-col items-center gap-1 self-start">
                   <Button
                     variant={isLive ? 'secondary' : 'primary'}
                     size="sm"
-                    className="!px-2.5"
+                    className="!flex-col !gap-0.5 !px-2 !py-1.5 sm:!flex-row sm:!gap-1.5 sm:!px-2.5"
                     disabled={pushingId === item.id || status === 'offline'}
                     onClick={() => void doPush(item)}
                     aria-label="推送上台"
                   >
                     {pushingId === item.id ? (
-                      <Loader2 size={13} className="animate-spin" />
+                      <Loader2 size={14} className="animate-spin" />
                     ) : (
-                      <Radio size={13} />
+                      <Radio size={14} />
                     )}
-                    推送
+                    <span className="text-[10px] leading-none sm:text-[13px]">推送</span>
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="!px-1.5 text-[var(--muted-fg)]"
+                    className="!h-8 !w-9 !px-0 text-[var(--muted-fg)]"
                     onClick={() => setDeleteItem(item)}
                     aria-label="移除"
                   >
