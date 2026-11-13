@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Music4, Plus, Search, X } from 'lucide-react';
 import { Button, Card, EmptyState, Spinner } from '@/components/ui';
 import { useSongSearch } from '@/components/SongSearch';
+import { highlight } from '@/lib/highlight';
 import { supabase, type Song } from '@/lib/supabase';
 
 type SortMode = 'recent' | 'title';
@@ -252,13 +253,13 @@ export default function SongsPage() {
                 className="flex items-center gap-3 px-3.5 py-3 hover:bg-[var(--soft)]"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{s.title}</p>
+                  <p className="truncate font-medium">{highlight(s.title, q)}</p>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-[var(--muted-fg)]">
                     {s.original_key ? (
                       <span className="font-mono">{s.original_key}</span>
                     ) : null}
-                    {s.source ? <span>{s.source}</span> : null}
-                    {s.tags?.length ? <span>{s.tags.slice(0, 3).join('、')}</span> : null}
+                    {s.source ? <span>{highlight(s.source, q)}</span> : null}
+                    {s.tags?.length ? <span>{highlight(s.tags.slice(0, 3).join('、'), q)}</span> : null}
                   </p>
                   {/* Say why this row matched: an unexplained lyrics hit looks
                       like a broken search. */}
@@ -268,7 +269,7 @@ export default function SongsPage() {
                         歌詞
                       </span>
                       <span className="truncate">
-                        {lyricHits.find((l) => l.song.id === s.id)?.snippet}
+                        {highlight(lyricHits.find((l) => l.song.id === s.id)?.snippet ?? '', q)}
                       </span>
                     </p>
                   ) : null}
