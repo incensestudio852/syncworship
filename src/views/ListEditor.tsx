@@ -22,7 +22,7 @@ import { prefetchSongPages } from '@/hooks/useSongData';
 import { ConnectionBanner } from '@/components/ConnectionBanner';
 import { SongSearch } from '@/components/SongSearch';
 import { ConfirmDelete } from '@/components/ConfirmDialogs';
-import { Button, Card, Field, Input, Label, Spinner } from '@/components/ui';
+import { Button, Card, Spinner } from '@/components/ui';
 import { formatDate, relativeTime, sortItems, weekdayZh } from '@/lib/chords';
 import { saveListCache, readListCache } from '@/lib/offlineCache';
 import { getDeviceName, setDeviceName, resolveDeviceName, fallbackDeviceName } from '@/lib/deviceName';
@@ -442,29 +442,6 @@ export default function ListEditorPage() {
 
       {/* footer actions */}
       <div className="space-y-3 pt-2">
-        <Card className="p-3">
-          <Field label="這部裝置的名稱（顯示在「由 ___ 推送」）">
-            <div className="flex gap-2">
-              <Input
-                value={deviceName}
-                onChange={(e) => setDevice(e.target.value)}
-                placeholder="例如：台上 iPad"
-                maxLength={24}
-              />
-              <Button
-                variant="secondary"
-                className="shrink-0 whitespace-nowrap"
-                onClick={() => {
-                  setDeviceName(deviceName);
-                  toast('已儲存裝置名稱', 'success');
-                }}
-                disabled={!deviceName.trim()}
-              >
-                儲存
-              </Button>
-            </div>
-          </Field>
-        </Card>
 
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => void loadFromNetwork()}>
