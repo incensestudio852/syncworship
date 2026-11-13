@@ -2,94 +2,56 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8" />
-<title>詩歌庫</title>
+<title>上傳詩歌庫</title>
 <link rel="stylesheet" href="base.css" />
-<style>
-  .split{display:grid; grid-template-columns:392px 1fr; gap:52px; margin-top:30px; align-items:start;}
-  .phone{
-    position:relative; border-radius:22px; overflow:hidden; background:#fff;
-    border:8px solid #1b1b1e; box-shadow:0 16px 40px rgba(20,30,50,.15);
-  }
-  .phone img{display:block; width:100%;}
-  /* Pins anchor to the image box, not the phone box: the 8px bezel
-     otherwise shifted every marker down-right by ~2%. */
-  .shot{position:relative;}
-
-
-  .legend{display:flex; flex-direction:column; gap:17px; padding-top:4px;}
-  .li{display:flex; gap:12px;}
-  .li .k{
-    flex:none; width:26px; height:26px; border-radius:50%; background:var(--gold); color:#fff;
-    font-size:13px; font-weight:700; display:grid; place-items:center; margin-top:1px;
-  }
-  .li b{display:block; font-size:16px; font-weight:650; margin-bottom:3px;}
-  .li p{font-size:13.5px; color:var(--muted); line-height:1.55;}
-
-  .specs{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:22px;}
-  .spec{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 13px;}
-  .spec .v{font-size:20px; font-weight:700; color:var(--accent); letter-spacing:-.3px;}
-  .spec .l{font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.4;}
-
-  .note{
-    margin-top:16px; font-size:12.5px; color:var(--muted); line-height:1.6;
-    background:var(--card); border:1px solid var(--line); border-left:3px solid var(--gold);
-    border-radius:10px; padding:13px 16px;
-  }
-  .note b{color:var(--ink);}
-</style>
 </head>
 <body>
 
-<div class="kicker">第 3 頁 · 詩歌庫</div>
-<h1>上傳一次，<em>以後都搜得到</em>。</h1>
-<p class="lead">
-  樂譜可以是 PDF 或照片。系統在瀏覽器內轉成壓縮頁面，同時辨識歌詞與和弦，
-  之後用一個搜尋欄就能找到歌名、歌詞或標籤。
-</p>
+<div class="mast">
+  <span class="mark">Sync Worship</span>
+  <span class="tag">一同敬拜 · 同步睇譜</span>
+  <span class="page">詩歌庫</span>
+</div>
+
+<h1>上傳<b>詩歌庫</b>，以後都搵到</h1>
+<p class="lead">樂譜可以係 PDF，也可以係手機影嘅相。上傳之後自動認歌詞同和弦，下次用一個欄就搵返出嚟。</p>
 
 <div class="split">
-  <div class="phone">
-    <div class="shot">
-      <img src="../s2_library.png" alt="詩歌庫" />
-    <span class="pin" style="left:83.2%; top:14.9%">F</span>
-    <span class="pin" style="left:49.6%; top:22.0%">G</span>
-    <span class="pin" style="left:17.1%; top:28.7%">H</span>
+  <div>
+    <div class="shotcap"><span class="pill">詩歌庫</span>上傳、搜尋、篩選</div>
+    <div class="phone">
+      <div class="shot">
+        <img src="../s2_library.png" alt="詩歌庫" />
+        <span class="pin" style="left:83.2%; top:14.9%">F</span>
+        <span class="pin" style="left:49.6%; top:22.0%">G</span>
+        <span class="pin" style="left:17.1%; top:28.7%">H</span>
+      </div>
     </div>
   </div>
 
   <div>
-    <div class="legend">
-      <div class="li"><span class="k">F</span>
+    <div class="points">
+      <div class="pt"><span class="k">F</span>
         <div><b>新增詩歌</b>
-          <p>上傳 PDF 或圖片，系統自動辨識歌詞與和弦。(BETA) 可一次選多個檔案，依次序合併成同一首歌的頁面。</p></div></div>
+          <p>影低或者上傳就得，系統自動認歌詞同和弦。一次可以揀幾個檔，會合併成同一首歌嘅頁面。
+          辨識語言有繁中、簡中、English 等六種。</p></div></div>
 
-      <div class="li"><span class="k">G</span>
-        <div><b>詩歌搜尋</b>
-          <p>一個欄位同時搜歌名、歌詞、標籤。命中的字詞會標亮，只中歌詞的結果會另外標示。</p></div></div>
+      <div class="pt"><span class="k">G</span>
+        <div><b>一個欄搵晒</b>
+          <p>歌名、歌詞、標籤都搜得。打幾個字就出，命中嘅字會標亮，唔記得歌名都搵得返。</p></div></div>
 
-      <div class="li"><span class="k">H</span>
+      <div class="pt"><span class="k">H</span>
         <div><b>標籤篩選</b>
-          <p>常用標籤附上歌曲數量。標籤太多時收合成「更多」，版面保持一行，不會擠亂。</p></div></div>
+          <p>用「敬拜」「聖餐」呢類標籤快速收窄。標籤多嘅時候會自動收埋，版面唔會亂。</p></div></div>
     </div>
 
-    <div class="specs">
-      <div class="spec"><div class="v">10 MB</div><div class="l">單一檔案上限</div></div>
-      <div class="spec"><div class="v">30 頁</div><div class="l">每個 PDF 上限</div></div>
-      <div class="spec"><div class="v">1100 px</div><div class="l">頁面壓縮後闊度</div></div>
-      <div class="spec"><div class="v">WebP</div><div class="l">儲存格式</div></div>
-    </div>
-
-    <div class="note">
-      <b>原檔不會保留。</b>系統只儲存壓縮後的頁面影像，方便現場快速載入。
-      原始 PDF 請自行備份，日後要重傳或改排版都用得著。
+    <div class="box">
+      <b>原檔唔會留低，記得自己備份</b>
+      <p>系統只儲存壓縮版嘅頁面影像，方便現場快速開。原本嘅 PDF 請自己留一份，
+      日後要重傳或者改排版都用得返。</p>
     </div>
   </div>
 </div>
-
-<footer>
-  <div>上傳時可勾選辨識語言：繁中、簡中、English、日本語、한국어、Tagalog。</div>
-  <div class="brand"><b>Sync Worship</b>敬拜直播 · 即時同步</div>
-</footer>
 
 </body>
 </html>
