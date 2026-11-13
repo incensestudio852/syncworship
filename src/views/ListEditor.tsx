@@ -346,7 +346,7 @@ export default function ListEditorPage() {
         <Card className="flex items-center gap-2 border-[var(--gold)]/40 bg-[var(--gold)]/8 px-3 py-2">
           <Radio size={14} className="shrink-0 animate-pulse text-[var(--gold)]" />
           <p className="min-w-0 flex-1 truncate text-sm">
-            <span className="text-[var(--muted-fg)]">台上：</span>
+            <span className="text-[var(--muted-fg)]">Live：</span>
             {liveItem.songs?.title}
           </p>
           <span className="shrink-0 text-[11px] text-[var(--muted-fg)]">
@@ -410,8 +410,8 @@ export default function ListEditorPage() {
                   <div className="flex items-center gap-1.5">
                     <p className="truncate text-sm font-medium">{item.songs?.title ?? '（已刪除）'}</p>
                     {isLive ? (
-                      <span className="shrink-0 rounded bg-[var(--gold)]/20 px-1 text-[9px] text-[var(--gold)]">
-                        台上
+                      <span className="shrink-0 rounded bg-[var(--gold)]/20 px-1 text-[9px] font-semibold uppercase tracking-wide text-[var(--gold)]">
+                        Live
                       </span>
                     ) : null}
                     {/* Quick jump to the song's edit page — fixing a title or
