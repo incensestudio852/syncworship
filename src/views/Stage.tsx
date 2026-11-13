@@ -15,6 +15,8 @@ import {
   Maximize2,
   Minimize2,
   Moon,
+  PanelRightClose,
+  PanelRightOpen,
   Pencil,
   X,
   Radio,
@@ -58,6 +60,29 @@ export default function StagePage() {
   const [metricsHidden, setMetricsHidden] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [showList, setShowList] = useState(false);
+
+  /**
+   * Desktop can collapse the metrics rail to give the sheet the full width.
+   * Remembered per device: a stage tablet that wants the sheet wide should stay
+   * wide across reloads, while the same account on a laptop may prefer the rail.
+   */
+  const [railOpen, setRailOpen] = useState(true);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('worship_rail_open');
+      if (v !== null) setRailOpen(v === '1');
+    } catch {
+      /* storage blocked — keep the default */
+    }
+  }, []);
+  const setRail = (open: boolean) => {
+    setRailOpen(open);
+    try {
+      localStorage.setItem('worship_rail_open', open ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  };
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isWide, setIsWide] = useState(true);
   const [pageInfo, setPageInfo] = useState({ index: 0, total: 0 });
@@ -445,7 +470,11 @@ export default function StagePage() {
 
       {/* main — the right padding reserves the metrics rail on tablet+, so the
           sheet stays centred in the space that is actually visible. */}
-      <div className={`relative flex min-h-0 flex-1 ${!showList ? 'sm:pr-64 lg:pr-72' : ''}`}>
+      <div
+        className={`relative flex min-h-0 flex-1 ${
+          !showList && railOpen ? 'sm:pr-64 lg:pr-72' : ''
+        }`}
+      >
         {plan === 'sheet' ? (
           <SheetViewer
             urls={urls}
@@ -474,7 +503,7 @@ export default function StagePage() {
         {/* Tablet and up: metrics live in a rail, expanded by default, because
             there is room and a leader wants them at a glance. Phones use the
             floating pill instead. */}
-        {!showList ? (
+        {!showList && railOpen ? (
           <aside className="absolute inset-y-0 right-0 z-10 hidden w-64 flex-col border-l border-[var(--border)] bg-[var(--card)]/95 backdrop-blur sm:flex lg:w-72">
             <div className="flex items-center gap-1 border-b border-[var(--border)] py-1 pl-3 pr-1.5 text-xs font-medium">
               <span className="flex-1 truncate">{current?.songs?.title ?? '—'}</span>
@@ -487,11 +516,32 @@ export default function StagePage() {
                   <Pencil size={14} />
                 </Link>
               ) : null}
+              <button
+                onClick={() => setRail(false)}
+                aria-label="收起資料欄"
+                title="收起資料欄，讓樂譜用盡寬度"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--soft)]"
+              >
+                <PanelRightClose size={14} />
+              </button>
             </div>
             {current ? (
               <StageMetricsPanel item={current} sungKey={sungKey} offset={offset} variant="rail" />
             ) : null}
           </aside>
+        ) : null}
+
+        {/* Re-open affordance: without it, collapsing the rail would be a
+            one-way door with no way back. */}
+        {!showList && !railOpen ? (
+          <button
+            onClick={() => setRail(true)}
+            aria-label="展開資料欄"
+            title="展開資料欄"
+            className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-l-lg border border-r-0 border-[var(--border)] bg-[var(--card)]/95 py-3 pl-1 pr-0.5 text-[var(--muted-fg)] shadow-sm backdrop-blur hover:text-[var(--accent)] sm:block"
+          >
+            <PanelRightOpen size={14} />
+          </button>
         ) : null}
 
         {/* Compact metrics float above the toggle so the sheet keeps the whole
