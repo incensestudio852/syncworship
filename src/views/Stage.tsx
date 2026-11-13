@@ -179,6 +179,34 @@ export default function StagePage() {
   );
   const selfPushedRef = useRef<Set<string>>(new Set());
 
+  /**
+   * Remembers which push this device has already declined, so dismissing is not
+   * undone by a reload, a reconnect, or the browser back button. Keyed by the
+   * push's server timestamp, which is unique per broadcast.
+   */
+  const dismissedKey = (listId?: string, at?: string | null) =>
+    listId && at ? `worship_push_dismissed:${listId}` : '';
+
+  const isDismissed = (listId?: string, at?: string | null) => {
+    const k = dismissedKey(listId, at);
+    if (!k || typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem(k) === at;
+    } catch {
+      return false;
+    }
+  };
+
+  const rememberDismissed = (listId?: string, at?: string | null) => {
+    const k = dismissedKey(listId, at);
+    if (!k) return;
+    try {
+      window.localStorage.setItem(k, at as string);
+    } catch {
+      /* storage full or blocked — the in-memory state still hides it */
+    }
+  };
+
   useEffect(() => {
     if (!liveSongId || liveIndex < 0) return;
     // Our own push applies immediately — we already chose it.
@@ -191,6 +219,11 @@ export default function StagePage() {
     }
     // Already looking at it: nothing to offer.
     if (current?.song_id === liveSongId) {
+      setPending(null);
+      return;
+    }
+    // The receiver already said no to this exact push.
+    if (isDismissed(listId, live?.updated_at)) {
       setPending(null);
       return;
     }
@@ -339,7 +372,10 @@ export default function StagePage() {
           title={pending.title}
           by={pending.by}
           onAccept={acceptPending}
-          onDismiss={() => setPending(null)}
+          onDismiss={() => {
+            rememberDismissed(listId, live?.updated_at);
+            setPending(null);
+          }}
         />
       ) : null}
 
