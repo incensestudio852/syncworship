@@ -604,6 +604,8 @@ export default function SongDetailPage() {
           index={lightboxAt}
           onClose={() => setLightboxAt(null)}
           onIndexChange={setLightboxAt}
+          viewerHref={`/view/?id=${song.id}`}
+          hint="按右上角可翻頁及切換和弦"
         />
       ) : null}
     </div>

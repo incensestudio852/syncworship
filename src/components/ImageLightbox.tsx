@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 /**
@@ -15,11 +16,17 @@ export function ImageLightbox({
   index,
   onClose,
   onIndexChange,
+  viewerHref,
+  hint,
 }: {
   pages: { url: string; page: number }[];
   index: number;
   onClose: () => void;
   onIndexChange: (i: number) => void;
+  /** Link to the full-screen viewer, when this song is saved. */
+  viewerHref?: string;
+  /** Small caption next to the page counter. */
+  hint?: string;
 }) {
   const [i, setI] = useState(index);
   const total = pages.length;
@@ -63,9 +70,19 @@ export function ImageLightbox({
       }}
     >
       <div className="flex shrink-0 items-center justify-between px-4 py-3 text-white">
-        <span className="text-sm">
+        <span className="flex min-w-0 items-center gap-2 text-sm">
           第 {i + 1} / {total} 頁
-          <span className="ml-2 text-[11px] text-white/60">確認無誤後再儲存</span>
+          {hint ? (
+            <span className="truncate text-[11px] text-white/60">{hint}</span>
+          ) : null}
+          {viewerHref ? (
+            <Link
+              href={viewerHref}
+              className="shrink-0 rounded-full bg-white/15 px-2.5 py-1 text-[11px] text-white hover:bg-white/25"
+            >
+              全螢幕檢視
+            </Link>
+          ) : null}
         </span>
         <button
           onClick={onClose}
