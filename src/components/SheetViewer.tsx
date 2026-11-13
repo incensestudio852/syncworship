@@ -33,11 +33,17 @@ export function SheetViewer({
   const ZOOM_MAX = 3;
   const ZOOM_STEP = 0.25;
   const [zoom, setZoom] = useState(1);
+  /** Natural size that fills the viewport at zoom 1, measured from the image. */
+  const [fit, setFit] = useState<{ w: number; h: number } | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
-  // Reset when the song changes so the next sheet doesn't open mid-zoom.
+  // Reset when the song or page changes so the next sheet opens fitted, and
+  // drop the cached measurement — reusing the previous page's size would scale
+  // a differently-shaped page from the wrong baseline.
   useEffect(() => {
     setZoom(1);
-  }, [pageNumbers[0]]);
+    setFit(null);
+  }, [pageNumbers[0], index]);
 
   const clamp = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
   const zoomBy = (d: number) => setZoom((z) => clamp(z + d));
@@ -104,12 +110,25 @@ export function SheetViewer({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={currentUrl}
+            ref={imgRef}
             src={currentUrl}
             alt={`樂譜第 ${index + 1} 頁`}
-            style={zoom > 1 ? { width: `${zoom * 100}%`, maxWidth: 'none' } : undefined}
-            className={`sheet-img max-h-full max-w-full select-none object-contain rounded-md ${
-              dark ? 'bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]' : 'bg-white shadow-sm'
-            }`}
+            onLoad={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              setFit({ w: r.width, h: r.height });
+            }}
+            // Zoom scales the ALREADY-FITTED box rather than setting a
+            // percentage width. A percentage width alone left max-height in
+            // charge, so the image grew wider but object-contain shrank the
+            // artwork back to the same visible size — only the padding changed.
+            style={
+              zoom > 1 && fit
+                ? { width: fit.w * zoom, height: fit.h * zoom, maxWidth: 'none', maxHeight: 'none' }
+                : undefined
+            }
+            className={`sheet-img select-none object-contain rounded-md ${
+              zoom > 1 ? '' : 'max-h-full max-w-full'
+            } ${dark ? 'bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]' : 'bg-white shadow-sm'}`}
             draggable={false}
           />
         ) : (
