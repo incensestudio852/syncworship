@@ -5,9 +5,9 @@ import { Radio, X } from 'lucide-react';
 /**
  * Receiver-side broadcast offer.
  *
- * A push from another device never takes over this screen. It appears centred
- * in the middle of the stage as a compact card — wide enough to name the song
- * and its sender, narrow enough to leave the sheet readable around it — and the
+ * A push from another device never takes over this screen. It drops in just
+ * below the status strip, horizontally centred, as a small pill: a compact icon,
+ * the song, and one small 切換 button. The sheet below stays readable, and the
  * receiver decides when to switch.
  */
 export function IncomingPushBanner({
@@ -23,7 +23,7 @@ export function IncomingPushBanner({
 }) {
   return (
     <div
-      className="pointer-events-auto absolute left-1/2 top-1/2 z-40 flex w-[min(84vw,290px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2.5 rounded-2xl border border-[var(--accent)]/40 bg-[var(--card)]/97 px-4 py-4 text-center shadow-xl backdrop-blur"
+      className="pointer-events-auto absolute left-1/2 top-10 z-40 flex w-[min(92vw,340px)] -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--accent)]/40 bg-[var(--card)]/97 py-1 pl-1 pr-1.5 shadow-lg backdrop-blur"
       role="status"
       aria-live="polite"
       aria-label="收到推送"
@@ -31,23 +31,23 @@ export function IncomingPushBanner({
       <button
         onClick={onDismiss}
         aria-label="留在目前詩歌"
-        className="absolute right-1.5 top-1.5 grid h-8 w-8 place-items-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--soft)]"
+        className="order-last grid h-6 w-6 shrink-0 place-items-center rounded-full text-[var(--muted-fg)] hover:bg-[var(--soft)]"
       >
-        <X size={15} />
+        <X size={13} />
       </button>
 
-      <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--accent)] text-white">
-        <Radio size={16} />
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-white">
+        <Radio size={13} />
       </span>
 
-      <div className="min-w-0">
-        <p className="line-clamp-2 text-sm font-semibold leading-snug">《{title}》</p>
-        <p className="mt-0.5 truncate text-[11px] text-[var(--muted-fg)]">由 {by} 推送</p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-semibold leading-tight">《{title}》</p>
+        <p className="truncate text-[10px] leading-tight text-[var(--muted-fg)]">由 {by} 推送</p>
       </div>
 
       <button
         onClick={onAccept}
-        className="min-h-[42px] w-full rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white"
+        className="min-h-[32px] shrink-0 rounded-full bg-[var(--accent)] px-3 text-[12px] font-semibold text-white"
       >
         切換
       </button>
