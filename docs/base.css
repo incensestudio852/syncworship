@@ -66,3 +66,10 @@ h1 b{font-weight:800; color:var(--accent);}
 }
 .box b{display:block; font-size:19px; margin-bottom:6px;}
 .box p{font-size:17px; color:var(--muted); line-height:1.65;}
+
+/* inline UI chip, e.g. a +Intro tag or a [Chorus] marker */
+.mk{
+  display:inline-block; font-family:ui-monospace,Menlo,monospace; font-size:15px;
+  color:var(--accent); background:rgba(30,58,95,.07); border-radius:5px;
+  padding:1px 7px; margin-right:5px; white-space:nowrap;
+}
