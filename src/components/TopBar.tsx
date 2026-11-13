@@ -55,10 +55,12 @@ export function TopBar() {
           >
             {dark ? <Sun size={17} /> : <Moon size={17} />}
           </Button>
-          <Link href="/settings" aria-label="設定" className="hidden sm:block">
-            <Button variant="ghost" className="!px-2">
-              <Settings2 size={17} />
-            </Button>
+          <Link
+            href="/settings/"
+            aria-label="設定"
+            className="inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-xl px-2.5 text-[var(--muted-fg)] transition-colors hover:bg-[var(--soft)] hover:text-[var(--fg)] max-sm:hidden"
+          >
+            <Settings2 size={17} />
           </Link>
           {user ? (
             <button
