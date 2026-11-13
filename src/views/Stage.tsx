@@ -15,6 +15,7 @@ import {
   Maximize2,
   Minimize2,
   Moon,
+  Pencil,
   X,
   Radio,
   Sun,
@@ -404,9 +405,23 @@ export default function StagePage() {
 
         {showList ? (
           <aside className="absolute inset-y-0 right-0 z-30 flex w-64 flex-col border-l border-[var(--border)] bg-[var(--card)]/97 backdrop-blur sm:w-72">
-            <div className="flex items-center justify-between border-b border-[var(--border)] px-3 py-2 text-xs font-medium">
-              <span>詩歌順序</span>
-              <button onClick={() => setShowList(false)} className="text-[var(--muted-fg)]">
+            <div className="flex items-center gap-1 border-b border-[var(--border)] py-1 pl-3 pr-1.5 text-xs font-medium">
+              <span className="flex-1">詩歌順序</span>
+              {/* Jump straight to editing the list instead of leaving the stage
+                  and hunting for it — the reason people open this panel mid-set. */}
+              <Link
+                href={`/lists/?id=${listId}`}
+                aria-label="編輯敬拜清單"
+                title="編輯敬拜清單"
+                className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--fg)]"
+              >
+                <Pencil size={14} />
+              </Link>
+              <button
+                onClick={() => setShowList(false)}
+                aria-label="收起"
+                className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--soft)]"
+              >
                 <ChevronRight size={15} />
               </button>
             </div>
