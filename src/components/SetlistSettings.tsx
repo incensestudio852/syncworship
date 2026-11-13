@@ -213,18 +213,6 @@ export function SetlistRowSettings({
             </p>
           )}
 
-          {/* opening intensity for the whole song, as in the sheet's left column */}
-          <div className="flex items-center gap-2 border-t border-[var(--border)] pt-2">
-            <span className="text-[10px] font-medium text-[var(--muted-fg)]">整首起始動態</span>
-            <input
-              value={item.dynamic ?? ''}
-              onChange={(e) => onChange({ dynamic: normaliseDynamic(e.target.value) })}
-              placeholder="1-10"
-              aria-label="整首起始動態"
-              className={`h-7 w-14 rounded-md border border-[var(--border)] bg-[var(--card)] px-1 text-center font-mono text-[11px] outline-none focus:border-[var(--accent)] ${dynamicBand(item.dynamic).text}`}
-            />
-            <span className="text-[10px] text-[var(--muted-fg)]">1-3 安靜 · 4-6 推進 · 7-10 全開</span>
-          </div>
         </div>
       ) : null}
     </div>
