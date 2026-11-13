@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileWarning } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileWarning, Maximize2, Minus, Plus } from 'lucide-react';
 import { Button } from './ui';
 
 /**
@@ -23,6 +23,31 @@ export function SheetViewer({
 }) {
   const [index, setIndex] = useState(0);
   const total = pageNumbers.length;
+
+  /**
+   * Zoom is stored as a multiplier of the fitted size, so 1 means "fill the
+   * available area" at any window size. Capped at 3x: past that the image is
+   * upscaled beyond its rendered resolution and only gets blurry.
+   */
+  const ZOOM_MIN = 1;
+  const ZOOM_MAX = 3;
+  const ZOOM_STEP = 0.25;
+  const [zoom, setZoom] = useState(1);
+
+  // Reset when the song changes so the next sheet doesn't open mid-zoom.
+  useEffect(() => {
+    setZoom(1);
+  }, [pageNumbers[0]]);
+
+  const clamp = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
+  const zoomBy = (d: number) => setZoom((z) => clamp(z + d));
+
+  /** Ctrl/⌘ + wheel, the gesture people already use on sheet readers. */
+  const onWheel = (e: React.WheelEvent) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    zoomBy(e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+  };
   const startX = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,13 +94,19 @@ export function SheetViewer({
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-1">
+      <div
+        className={`relative flex min-h-0 flex-1 items-center justify-center p-1 ${
+          zoom > 1 ? 'overflow-auto' : 'overflow-hidden'
+        }`}
+        onWheel={onWheel}
+      >
         {currentUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={currentUrl}
             src={currentUrl}
             alt={`樂譜第 ${index + 1} 頁`}
+            style={zoom > 1 ? { width: `${zoom * 100}%`, maxWidth: 'none' } : undefined}
             className={`sheet-img max-h-full max-w-full select-none object-contain rounded-md ${
               dark ? 'bg-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]' : 'bg-white shadow-sm'
             }`}
@@ -94,7 +125,7 @@ export function SheetViewer({
               onClick={() => go(-1)}
               disabled={index === 0}
               aria-label="上一頁"
-              className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur transition-opacity disabled:opacity-0 sm:left-3"
+              className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-black/35 p-2 text-white backdrop-blur transition-opacity disabled:opacity-0 sm:left-3 [@media(pointer:fine)]:left-11"
             >
               <ChevronLeft size={22} />
             </button>
@@ -108,6 +139,43 @@ export function SheetViewer({
             </button>
           </>
         ) : null}
+
+        {/* Zoom rail: pinned to the left edge like a sheet-music reader.
+            `pointer-fine` keeps it off phones and iPads, where the sheet is
+            already edge-to-edge and a rail would cover the music. */}
+        <div className="pointer-events-auto absolute left-1 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-0.5 rounded-full bg-black/40 p-1 text-white shadow-lg backdrop-blur [@media(pointer:fine)]:flex">
+          <button
+            onClick={() => zoomBy(ZOOM_STEP)}
+            disabled={zoom >= ZOOM_MAX}
+            aria-label="放大"
+            title="放大（Ctrl + 滾輪亦可）"
+            className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/20 disabled:opacity-30"
+          >
+            <Plus size={15} />
+          </button>
+          <span className="min-w-7 py-0.5 text-center font-mono text-[10px] tabular-nums leading-none opacity-90">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            onClick={() => zoomBy(-ZOOM_STEP)}
+            disabled={zoom <= ZOOM_MIN}
+            aria-label="縮小"
+            title="縮小（Ctrl + 滾輪亦可）"
+            className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/20 disabled:opacity-30"
+          >
+            <Minus size={15} />
+          </button>
+          <span className="my-0.5 h-px w-4 bg-white/25" />
+          <button
+            onClick={() => setZoom(1)}
+            disabled={zoom === 1}
+            aria-label="重設縮放"
+            title="重設為填滿"
+            className="grid h-7 w-7 place-items-center rounded-full hover:bg-white/20 disabled:opacity-30"
+          >
+            <Maximize2 size={14} />
+          </button>
+        </div>
       </div>
 
       {total > 1 ? (
