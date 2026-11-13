@@ -1016,7 +1016,7 @@ function json(data, status, headers = {}) {
 }
 __name(json, "json");
 
-// ../.wrangler/tmp/pages-vidyHK/functionsRoutes-0.21353761011520622.mjs
+// ../.wrangler/tmp/pages-4APcHz/functionsRoutes-0.6803654621048008.mjs
 var routes = [
   {
     routePath: "/api/cantonhymn",
@@ -1536,7 +1536,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// ../.wrangler/tmp/bundle-r6RvNf/middleware-insertion-facade.js
+// ../.wrangler/tmp/bundle-rumGSx/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -1568,7 +1568,7 @@ function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// ../.wrangler/tmp/bundle-r6RvNf/middleware-loader.entry.ts
+// ../.wrangler/tmp/bundle-rumGSx/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
@@ -1668,4 +1668,4 @@ export {
   __INTERNAL_WRANGLER_MIDDLEWARE__,
   middleware_loader_entry_default as default
 };
-//# sourceMappingURL=functionsWorker-0.44061900811599974.mjs.map
+//# sourceMappingURL=functionsWorker-0.7338337476073664.mjs.map
