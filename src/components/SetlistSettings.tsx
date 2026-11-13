@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Plus, X } from 'lucide-react';
+import { ChevronDown, GripVertical, Plus, Trash2, X } from 'lucide-react';
 import type { FlowStep, ListItem } from '@/lib/supabase';
 import {
   FLOW_SECTIONS,
@@ -9,13 +9,20 @@ import {
   TRANSITIONS,
   dynamicBand,
   keyLabel,
+  normaliseDynamic,
 } from '@/lib/setlist';
-import { Input, Label } from '@/components/ui';
 
 /**
- * Per-song setlist settings, following progressive disclosure:
- * collapsed shows only what a leader reads at a glance (key, tempo, one line of
- * remarks); everything structural lives behind 編輯段落 Flow.
+ * Per-song setlist settings.
+ *
+ * Collapsed it shows only what a leader reads at a glance: key, tempo and the
+ * flow summary. Expanded it becomes the arrangement *table*, because a real
+ * worship flow sheet gives every section its own intensity and remark:
+ *
+ *   Intro  3    [Ab-Bb-Eb] Piano and second key on
+ *   V1     3    AG in
+ *   V1     4    Drum in
+ *   Cx2    3    Accent on the first beat
  */
 export function SetlistRowSettings({
   item,
@@ -32,35 +39,43 @@ export function SetlistRowSettings({
   const serviceKey = item.service_key ?? '';
   const tempo = item.tempo ?? item.songs?.tempo ?? null;
   const flow = item.flow ?? [];
-  const dyn = item.dynamic ?? item.songs?.dynamic ?? null;
-  const band = dynamicBand(dyn);
 
   const setFlow = (next: FlowStep[]) => onChange({ flow: next });
 
-  const addSection = (section: string) => {
-    const existing = flow.findIndex((s) => s.section === section);
-    if (existing >= 0) {
-      // Tapping the same chip again bumps its repeat count — that is how a
-      // leader says "chorus twice", so it should not require a second control.
-      const next = [...flow];
-      next[existing] = { ...next[existing], count: (next[existing].count ?? 1) + 1 };
-      setFlow(next);
-      return;
-    }
-    setFlow([...flow, { section, count: 1 }]);
+  /**
+   * Append a row. Repeating a section adds a NEW row rather than bumping a
+   * count, because each pass carries its own dynamic and remark — that is the
+   * whole reason the sheet is a table.
+   */
+  const addRow = (section: string) =>
+    setFlow([...flow, { section, count: 1, dynamic: '', remark: '' }]);
+
+  const patchRow = (i: number, patch: Partial<FlowStep>) => {
+    const next = [...flow];
+    next[i] = { ...next[i], ...patch };
+    setFlow(next);
   };
+
+  const moveRow = (i: number, delta: number) => {
+    const j = i + delta;
+    if (j < 0 || j >= flow.length) return;
+    const next = [...flow];
+    [next[i], next[j]] = [next[j], next[i]];
+    setFlow(next);
+  };
+
+  const summary = flow
+    .map((s) => (s.count && s.count > 1 ? `${s.section}x${s.count}` : s.section))
+    .join(' → ');
 
   return (
     <div className="mt-1.5 space-y-1.5">
-      {/* ---- collapsed row: key · tempo · remarks ---- */}
+      {/* ---- collapsed: key · tempo · flow summary ---- */}
       <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-        <label className="sr-only" htmlFor={`key-${item.id}`}>
-          調性
-        </label>
         <select
-          id={`key-${item.id}`}
           value={serviceKey}
           onChange={(e) => onChange({ service_key: e.target.value || null })}
+          aria-label="演唱調性"
           className="h-7 w-[76px] shrink-0 truncate rounded-md border border-[var(--border)] bg-transparent px-1 font-mono text-[11px] text-[var(--fg)] outline-none focus:border-[var(--accent)]"
           title={originalKey ? `原調 ${keyLabel(originalKey)}` : '原調未設定'}
         >
@@ -84,16 +99,9 @@ export function SetlistRowSettings({
           className="h-7 w-12 rounded-md border border-[var(--border)] bg-transparent px-1 text-center font-mono text-[11px] outline-none focus:border-[var(--accent)]"
         />
 
-        {dyn ? (
-          <span className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 ${band.text}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${band.swatch}`} />
-            {dyn}
-          </span>
-        ) : null}
-
         {flow.length ? (
-          <span className="truncate rounded-md bg-[var(--soft)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted-fg)]">
-            {flow.map((s) => (s.count && s.count > 1 ? `${s.section}x${s.count}` : s.section)).join(' → ')}
+          <span className="min-w-0 flex-1 truncate rounded-md bg-[var(--soft)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--muted-fg)]">
+            {summary}
           </span>
         ) : null}
       </div>
@@ -101,7 +109,7 @@ export function SetlistRowSettings({
       <input
         value={item.notes ?? ''}
         onChange={(e) => onChange({ notes: e.target.value })}
-        placeholder="備註…"
+        placeholder="整首備註…"
         aria-label="備註"
         className="h-8 w-full bg-transparent text-[11px] leading-none text-[var(--muted-fg)] outline-none placeholder:text-[var(--muted-fg)]/60 focus:text-[var(--fg)] [@media(hover:none)]:text-base [@media(hover:none)]:leading-tight sm:text-[11px]"
       />
@@ -111,122 +119,112 @@ export function SetlistRowSettings({
         aria-expanded={open}
         className="flex min-h-[28px] items-center gap-1 text-[11px] text-[var(--accent)] hover:underline"
       >
-        <ChevronDown
-          size={12}
-          className={`transition-transform ${open ? 'rotate-180' : ''}`}
-        />
-        {open ? '收起段落設定' : '編輯段落 Flow'}
+        <ChevronDown className={`transition-transform ${open ? 'rotate-180' : ''}`} size={12} />
+        {open ? '收起段落 Flow' : '編輯段落 Flow'}
         {saving ? <span className="text-[var(--muted-fg)]">儲存中…</span> : null}
       </button>
 
       {open ? (
-        <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--soft)]/50 p-2.5">
-          {/* ---- flow builder ---- */}
-          <div>
-            <Label>段落流程</Label>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {FLOW_SECTIONS.map((sec) => (
-                <button
-                  key={sec}
-                  onClick={() => addSection(sec)}
-                  className="min-h-[28px] rounded-md border border-[var(--border)] bg-[var(--card)] px-2 text-[11px] text-[var(--muted-fg)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                >
-                  +{sec}
-                </button>
-              ))}
-            </div>
-
-            {flow.length ? (
-              <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]">
-                {flow.map((step, i) => (
-                  <span
-                    key={`${step.section}-${i}`}
-                    className="flex items-center gap-0.5 rounded-md bg-[var(--accent)]/10 px-1.5 py-0.5 font-mono text-[var(--accent)]"
-                  >
-                    {step.section}
-                    <span className="ml-0.5 flex items-center">
-                      {[1, 2, 3, 4].map((n) => (
-                        <button
-                          key={n}
-                          onClick={() => {
-                            const next = [...flow];
-                            next[i] = { ...step, count: n };
-                            setFlow(next);
-                          }}
-                          aria-label={`${step.section} 重複 ${n} 次`}
-                          className={`px-0.5 ${
-                            (step.count ?? 1) === n ? 'font-bold text-[var(--accent)]' : 'text-[var(--muted-fg)]'
-                          }`}
-                        >
-                          x{n}
-                        </button>
-                      ))}
-                    </span>
-                    <button
-                      onClick={() => setFlow(flow.filter((_, j) => j !== i))}
-                      aria-label={`移除 ${step.section}`}
-                      className="ml-0.5 text-[var(--muted-fg)] hover:text-rose-500"
-                    >
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-1.5 text-[11px] text-[var(--muted-fg)]">
-                點選段落加入順序；再點一次同一段落會增加次數（Cx2）。
-              </p>
-            )}
+        <div className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--soft)]/50 p-2.5">
+          <div className="flex flex-wrap gap-1">
+            {FLOW_SECTIONS.map((sec) => (
+              <button
+                key={sec}
+                onClick={() => addRow(sec)}
+                className="min-h-[28px] rounded-md border border-[var(--border)] bg-[var(--card)] px-2 text-[11px] text-[var(--muted-fg)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              >
+                +{sec}
+              </button>
+            ))}
+            <button
+              onClick={() => addRow('')}
+              className="min-h-[28px] rounded-md border border-dashed border-[var(--border)] bg-[var(--card)] px-2 text-[11px] text-[var(--muted-fg)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+            >
+              +自訂
+            </button>
           </div>
 
-          {/* ---- dynamic ---- */}
-          <div>
-            <Label>動態級數（1 安靜 · 10 全開）</Label>
-            <div className="mt-1 flex items-center gap-2">
-              <input
-                type="range"
-                min={1}
-                max={10}
-                value={dyn ?? 5}
-                onChange={(e) => onChange({ dynamic: Number(e.target.value) })}
-                className="h-8 flex-1 accent-[var(--accent)]"
-                aria-label="動態級數"
-              />
-              <span className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${band.text}`}>
-                <span className={`h-2 w-2 rounded-full ${band.swatch}`} />
-                {dyn ?? 5} · {band.label}
-              </span>
-            </div>
-          </div>
-
-          {/* ---- per-section remarks ---- */}
           {flow.length ? (
             <div>
-              <Label>段落備註</Label>
-              <div className="mt-1 space-y-1">
+              {/* headers mirror the worship sheet the team already uses */}
+              <div className="flex items-center gap-1 pb-1 text-[10px] font-medium text-[var(--muted-fg)]">
+                <span className="w-4" />
+                <span className="w-[74px]">段落</span>
+                <span className="w-10 text-center">動態</span>
+                <span className="flex-1">備註</span>
+                <span className="w-4" />
+              </div>
+
+              <ul className="space-y-1">
                 {flow.map((step, i) => {
-                  const key = `${step.section}${step.count && step.count > 1 ? step.count : ''}`;
+                  const band = dynamicBand(step.dynamic);
                   return (
-                    <div key={`${key}-${i}`} className="flex items-center gap-1.5">
-                      <span className="w-14 shrink-0 truncate font-mono text-[11px] text-[var(--muted-fg)]">
-                        {key}
-                      </span>
-                      <Input
-                        value={item.flow_notes?.[key] ?? ''}
-                        onChange={(e) =>
-                          onChange({
-                            flow_notes: { ...(item.flow_notes ?? {}), [key]: e.target.value },
-                          })
-                        }
-                        placeholder="此段提示…"
-                        className="!min-h-[32px] !py-1 text-[11px]"
+                    <li key={i} className="flex items-center gap-1">
+                      <button
+                        onClick={() => moveRow(i, -1)}
+                        aria-label="上移"
+                        disabled={i === 0}
+                        className="grid h-7 w-4 shrink-0 place-items-center text-[var(--muted-fg)] disabled:opacity-25"
+                      >
+                        <GripVertical size={11} />
+                      </button>
+
+                      <input
+                        value={step.section}
+                        onChange={(e) => patchRow(i, { section: e.target.value })}
+                        placeholder="段落"
+                        aria-label="段落名稱"
+                        className="h-7 w-[74px] shrink-0 rounded-md border border-[var(--border)] bg-[var(--card)] px-1 text-center font-mono text-[11px] outline-none focus:border-[var(--accent)]"
                       />
-                    </div>
+
+                      <input
+                        value={step.dynamic ?? ''}
+                        onChange={(e) =>
+                          patchRow(i, { dynamic: normaliseDynamic(e.target.value) })
+                        }
+                        placeholder="1-10"
+                        aria-label={`${step.section} 動態級數`}
+                        className={`h-7 w-10 shrink-0 rounded-md border border-[var(--border)] bg-[var(--card)] px-0.5 text-center font-mono text-[11px] outline-none focus:border-[var(--accent)] ${band.text}`}
+                      />
+
+                      <input
+                        value={step.remark ?? ''}
+                        onChange={(e) => patchRow(i, { remark: e.target.value })}
+                        placeholder="此段提示…"
+                        aria-label={`${step.section} 備註`}
+                        className="h-7 min-w-0 flex-1 rounded-md border border-[var(--border)] bg-[var(--card)] px-1.5 text-[11px] outline-none focus:border-[var(--accent)]"
+                      />
+
+                      <button
+                        onClick={() => setFlow(flow.filter((_, j) => j !== i))}
+                        aria-label={`移除 ${step.section || '段落'}`}
+                        className="grid h-7 w-4 shrink-0 place-items-center text-[var(--muted-fg)] hover:text-rose-500"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
-          ) : null}
+          ) : (
+            <p className="text-[11px] leading-relaxed text-[var(--muted-fg)]">
+              點選上方段落建立流程。每個段落可各自設定動態級數與備註；同一段落可加入多次（例如 C 兩次、B 一次）。
+            </p>
+          )}
+
+          {/* opening intensity for the whole song, as in the sheet's left column */}
+          <div className="flex items-center gap-2 border-t border-[var(--border)] pt-2">
+            <span className="text-[10px] font-medium text-[var(--muted-fg)]">整首起始動態</span>
+            <input
+              value={item.dynamic ?? ''}
+              onChange={(e) => onChange({ dynamic: normaliseDynamic(e.target.value) })}
+              placeholder="1-10"
+              aria-label="整首起始動態"
+              className={`h-7 w-14 rounded-md border border-[var(--border)] bg-[var(--card)] px-1 text-center font-mono text-[11px] outline-none focus:border-[var(--accent)] ${dynamicBand(item.dynamic).text}`}
+            />
+            <span className="text-[10px] text-[var(--muted-fg)]">1-3 安靜 · 4-6 推進 · 7-10 全開</span>
+          </div>
         </div>
       ) : null}
     </div>
@@ -260,7 +258,7 @@ export function TransitionPicker({
   const active = TRANSITIONS.find((t) => t.id === value);
 
   return (
-    <div className="flex flex-wrap items-center gap-1">
+    <div className="flex flex-wrap items-center justify-center gap-1">
       {TRANSITIONS.map((t) => (
         <button
           key={t.id}
@@ -281,6 +279,7 @@ export function TransitionPicker({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={() => onChange('other', draft)}
           placeholder="說明…"
+          aria-label="過場說明"
           className="h-7 min-w-0 flex-1 rounded-md border border-[var(--border)] bg-transparent px-1.5 text-[11px] outline-none focus:border-[var(--accent)]"
         />
       ) : null}
@@ -291,7 +290,7 @@ export function TransitionPicker({
             onChange(null, null);
           }}
           aria-label="移除過場指示"
-          className="text-[var(--muted-fg)] hover:text-rose-500"
+          className="grid h-7 w-5 place-items-center text-[var(--muted-fg)] hover:text-rose-500"
         >
           <X size={12} />
         </button>

@@ -210,7 +210,18 @@ export default function ListEditorPage() {
       const { error } = await supabase().from('list_items').update(patch).eq('id', item.id);
       saveTimers.current.delete(item.id);
       setSavingItemId((cur) => (cur === item.id ? null : cur));
-      if (error) toast(`儲存失敗：${error.message}`, 'error');
+      if (error) {
+        // "Could not find the 'flow' column ... in the schema cache" means the
+        // database predates this feature. Say that plainly instead of surfacing
+        // PostgREST's schema-cache wording, which reads like a bug in the app.
+        const missing = error.message.match(/'([a-z_]+)' column/);
+        toast(
+          missing
+            ? `資料庫尚未更新（缺少「${missing[1]}」欄位）。請先執行 supabase/steps/08_setlist_settings.sql 與 09_flow_rows.sql。`
+            : `儲存失敗：${error.message}`,
+          'error',
+        );
+      }
     }, 450);
     saveTimers.current.set(item.id, timer);
   };
