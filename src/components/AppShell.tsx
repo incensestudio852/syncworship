@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Loader2, LockKeyhole } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { isConfigured, missingEnvMessage } from '@/lib/supabase';
 import { TopBar } from './TopBar';
 import { ToastProvider } from './Toast';
+import { resolveDeviceName } from '@/lib/deviceName';
 
 /**
  * Registers the offline shell service worker.
@@ -72,11 +74,26 @@ function Inner({ children }: { children: React.ReactNode }) {
 }
 
 function Footer() {
+  // Read on mount, not during render: localStorage is unavailable during the
+  // static export's prerender and would otherwise cause a hydration mismatch.
+  const [name, setName] = useState<string | null>(null);
+  useEffect(() => {
+    setName(resolveDeviceName());
+  }, []);
+
   return (
     <footer className="no-print mt-8 border-t border-[var(--border)] px-4 py-5 text-center text-[11px] leading-relaxed text-[var(--muted-fg)]">
       <p>本系統不保留原始 PDF，請自行備份原檔。</p>
       <p className="mt-1 opacity-80">
-        所有裝置共用同一帳號；請在「設定」為每部裝置命名，以便識別推送來源。
+        建議在<Link href="/settings/" className="underline underline-offset-2 hover:text-[var(--fg)]">「設定」</Link>
+        為每部裝置命名，以便識別推送來源。
+        {name ? (
+          <>
+            {' '}
+            本機為：
+            <span className="font-medium text-[var(--fg)]">{name}</span>
+          </>
+        ) : null}
       </p>
     </footer>
   );

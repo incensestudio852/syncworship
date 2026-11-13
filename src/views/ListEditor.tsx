@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -25,7 +25,7 @@ import { ConfirmDelete } from '@/components/ConfirmDialogs';
 import { Button, Card, Field, Input, Label, Spinner } from '@/components/ui';
 import { formatDate, relativeTime, sortItems, weekdayZh } from '@/lib/chords';
 import { saveListCache, readListCache } from '@/lib/offlineCache';
-import { getDeviceName, setDeviceName, resolveDeviceName } from '@/lib/deviceName';
+import { getDeviceName, setDeviceName, resolveDeviceName, fallbackDeviceName } from '@/lib/deviceName';
 import { DeviceNamePrompt } from '@/components/DeviceNamePrompt';
 
 export default function ListEditorPage() {
@@ -41,6 +41,7 @@ export default function ListEditorPage() {
   const [offlineCopy, setOfflineCopy] = useState(false);
   const [pushingId, setPushingId] = useState<string | null>(null);
   const [deviceName, setDevice] = useState('');
+  const defaultDeviceName = useMemo(() => fallbackDeviceName(), []);
   const [deleteItem, setDeleteItem] = useState<ListItem | null>(null);
   const [deleteList, setDeleteList] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -496,7 +497,7 @@ export default function ListEditorPage() {
 
       <DeviceNamePrompt
         open={askName}
-        initialName={deviceName || '台上 iPad'}
+        initialName={deviceName || defaultDeviceName}
         onSave={(name) => {
           setDeviceName(name);
           setDevice(name);
