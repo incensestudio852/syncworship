@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, GripVertical, Plus, Trash2, X } from 'lucide-react';
+import { ArrowUp, ChevronDown, Plus, Trash2, X } from 'lucide-react';
 import type { FlowStep, ListItem } from '@/lib/supabase';
 import {
   FLOW_SECTIONS,
@@ -160,13 +160,16 @@ export function SetlistRowSettings({
                   const band = dynamicBand(step.dynamic);
                   return (
                     <li key={i} className="flex items-center gap-1">
+                      {/* Flow rows are not draggable — each tap moves the row
+                          up one place — so an arrow states what actually happens. */}
                       <button
                         onClick={() => moveRow(i, -1)}
                         aria-label="上移"
+                        title="上移"
                         disabled={i === 0}
-                        className="grid h-7 w-4 shrink-0 place-items-center text-[var(--muted-fg)] disabled:opacity-25"
+                        className="grid h-7 w-4 shrink-0 place-items-center text-[var(--muted-fg)] hover:text-[var(--accent)] disabled:opacity-25 disabled:hover:text-[var(--muted-fg)]"
                       >
-                        <GripVertical size={11} />
+                        <ArrowUp size={12} />
                       </button>
 
                       <input

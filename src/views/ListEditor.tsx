@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronDown,
-  ArrowUp,
+  GripVertical,
   Loader2,
   Pencil,
   Plus,
@@ -388,20 +388,20 @@ export default function ListEditorPage() {
                   isLive ? 'border-[var(--gold)]' : 'border-[var(--border)]'
                 }`}
               >
-                {/* An arrow reads as "move this up" rather than "drag me", and
-                    keeps the tap-to-advance / long-press-to-send-back behaviour
-                    the touch hint describes. Desktop still drags. */}
+                {/* Whole SONG blocks are drag-reordered, so this stays a grip
+                    handle. The arrow belongs to flow-editor rows, which have no
+                    drag and move one step per tap. */}
                 <button
-                  className="grid min-h-[36px] w-7 cursor-grab touch-none place-items-center text-[var(--muted-fg)] hover:text-[var(--accent)] active:cursor-grabbing"
-                  aria-label="上移（長按後移）"
-                  title="點一下前移，長按後移，亦可拖曳排序"
+                  className="grid min-h-[36px] w-7 cursor-grab touch-none place-items-center text-[var(--muted-fg)] active:cursor-grabbing"
+                  aria-label="拖曳排序"
+                  title="拖曳排序；手機上點一下前移，長按後移"
                   onClick={() => moveBy(index, -1)}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     moveBy(index, 1);
                   }}
                 >
-                  <ArrowUp size={15} />
+                  <GripVertical size={15} />
                 </button>
 
                 <span className="w-5 shrink-0 text-center font-mono text-xs text-[var(--muted-fg)]">
