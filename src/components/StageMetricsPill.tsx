@@ -47,7 +47,7 @@ export function StageMetricsPill({
       <button
         onClick={onToggleHidden}
         aria-label="顯示歌曲資訊"
-        className="absolute right-0 bottom-[84px] z-20 grid h-9 w-9 place-items-center rounded-l-xl border border-r-0 border-[var(--border)] bg-[var(--card)]/95 text-[var(--muted-fg)] shadow-sm backdrop-blur sm:hidden"
+        className="absolute right-2 top-10 z-20 grid h-8 w-8 place-items-center rounded-lg border border-[var(--border)] bg-[var(--card)]/95 text-[var(--muted-fg)] shadow-sm backdrop-blur sm:hidden"
       >
         <span className="text-[10px] font-semibold">i</span>
       </button>
@@ -55,13 +55,13 @@ export function StageMetricsPill({
   }
 
   return (
-    <div className="absolute right-0 bottom-[84px] z-20 w-[min(62vw,230px)] rounded-l-xl border border-r-0 border-[var(--border)] bg-[var(--card)]/95 py-1.5 pl-2.5 pr-1 shadow-sm backdrop-blur sm:hidden">
+    <div className="absolute right-2 top-10 z-20 max-w-[70vw] rounded-xl border border-[var(--border)] bg-[var(--card)]/95 px-2 py-1.5 shadow-sm backdrop-blur sm:hidden">
       {/* One value per line: key / tempo / dynamic / flow read as a stacked
           column, which is easier to scan mid-song than a wrapped row. */}
       <div className="flex items-start justify-between gap-1">
         <button
           onClick={onOpenDetails}
-          className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left"
+          className="flex min-w-0 flex-1 flex-col items-start gap-[3px] text-left"
           aria-label="開啟歌曲詳情"
         >
           <span className="flex items-baseline gap-1">
