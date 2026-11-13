@@ -97,9 +97,15 @@ function SetupNeeded() {
           <br />
           NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
         </div>
-        <p className="mt-4 text-xs text-[var(--muted-fg)]">
-          本機開發：建立 <code>.env.local</code>。Cloudflare Pages：於 Settings → Environment
-          variables 加入同名變數後重新部署。
+        <p className="mt-4 text-xs leading-relaxed text-[var(--muted-fg)]">
+          本機開發：建立 <code>.env.local</code> 並重新執行 build。
+          <br />
+          Cloudflare Workers：Worker → Settings → Build → Variables and Secrets，加入同名變數後<b>重新部署</b>。
+          <br />
+          Cloudflare Pages：Settings → Environment variables。
+        </p>
+        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+          這些是 build-time 變數：只加入變數而不重新部署，頁面仍會顯示此訊息。
         </p>
       </div>
     </div>
