@@ -6,9 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import {
   ChevronLeft,
   ChevronRight,
-  Ear,
   Eye,
   FileImage,
+  FileText,
   Loader2,
   EyeOff,
   ListMusic,
@@ -526,7 +526,7 @@ export default function StagePage() {
             onClick={() => setView(plan === 'sheet' ? 'lyrics' : 'sheet')}
             aria-label={plan === 'sheet' ? '顯示歌詞' : '顯示樂譜'}
           >
-            {plan === 'sheet' ? <Ear size={16} /> : <FileImage size={16} />}
+            {plan === 'sheet' ? <FileText size={16} /> : <FileImage size={16} />}
           </Button>
         ) : null}
 

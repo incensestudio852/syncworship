@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -27,6 +27,7 @@ import { formatDate, relativeTime, sortItems, weekdayZh } from '@/lib/chords';
 import { saveListCache, readListCache } from '@/lib/offlineCache';
 import { getDeviceName, setDeviceName, resolveDeviceName, fallbackDeviceName } from '@/lib/deviceName';
 import { DeviceNamePrompt } from '@/components/DeviceNamePrompt';
+import { SetlistRowSettings, TransitionPicker } from '@/components/SetlistSettings';
 
 export default function ListEditorPage() {
   const router = useRouter();
@@ -155,9 +156,25 @@ export default function ListEditorPage() {
   const addSong = async (song: { id: string; title: string }) => {
     if (!id) return;
     const nextOrder = items.length ? Math.max(...items.map((i) => i.sort_order)) + 1 : 0;
-    const { error } = await supabase()
-      .from('list_items')
-      .insert({ list_id: id, song_id: song.id, sort_order: nextOrder });
+
+    // Carry the song's own defaults into the setlist so a leader does not retype
+    // the tempo and flow for every service. service_key stays NULL, which means
+    // "sing it in the original key".
+    const { data: src } = await supabase()
+      .from('songs')
+      .select('tempo,dynamic,flow')
+      .eq('id', song.id)
+      .maybeSingle();
+    const defaults = (src as { tempo?: number | null; dynamic?: number | null; flow?: unknown } | null) ?? {};
+
+    const { error } = await supabase().from('list_items').insert({
+      list_id: id,
+      song_id: song.id,
+      sort_order: nextOrder,
+      tempo: defaults.tempo ?? null,
+      dynamic: defaults.dynamic ?? null,
+      flow: defaults.flow ?? null,
+    });
     if (error) {
       toast(`加入失敗：${error.message}`, 'error');
       return;
@@ -167,25 +184,35 @@ export default function ListEditorPage() {
     void prefetchSongPages(song.id);
   };
 
-  const updateKey = async (item: ListItem, key: string) => {
+  const [savingItemId, setSavingItemId] = useState<string | null>(null);
+  const saveTimers = useRef<Map<string, number>>(new Map());
+
+  /**
+   * Write any per-item setting.
+   *
+   * The UI updates immediately, then the row is written after a short pause so
+   * dragging the dynamic slider or typing a tempo does not fire a request per
+   * keystroke. A timer per item id means editing two rows at once still saves
+   * both.
+   */
+  const updateItem = (item: ListItem, patch: Partial<ListItem>) => {
     setItems((prev) =>
       prev.map((i) =>
-        i.id === item.id ? { ...i, selected_key: key, updated_at: new Date().toISOString() } : i,
+        i.id === item.id ? { ...i, ...patch, updated_at: new Date().toISOString() } : i,
       ),
     );
-    const { error } = await supabase()
-      .from('list_items')
-      .update({ selected_key: key.trim() || null })
-      .eq('id', item.id);
-    if (error) toast(`更新調性失敗：${error.message}`, 'error');
-  };
 
-  const updateNotes = async (item: ListItem, notes: string) => {
-    const { error } = await supabase()
-      .from('list_items')
-      .update({ notes: notes.trim() || null })
-      .eq('id', item.id);
-    if (error) toast(`更新備註失敗：${error.message}`, 'error');
+    const existing = saveTimers.current.get(item.id);
+    if (existing) window.clearTimeout(existing);
+    setSavingItemId(item.id);
+
+    const timer = window.setTimeout(async () => {
+      const { error } = await supabase().from('list_items').update(patch).eq('id', item.id);
+      saveTimers.current.delete(item.id);
+      setSavingItemId((cur) => (cur === item.id ? null : cur));
+      if (error) toast(`儲存失敗：${error.message}`, 'error');
+    }, 450);
+    saveTimers.current.set(item.id, timer);
   };
 
   const removeItem = async () => {
@@ -332,8 +359,8 @@ export default function ListEditorPage() {
           {items.map((item, index) => {
             const isLive = live?.active_song_id === item.song_id;
             return (
+              <Fragment key={item.id}>
               <li
-                key={item.id}
                 draggable
                 onDragStart={() => {
                   dragIndex.current = index;
@@ -381,26 +408,12 @@ export default function ListEditorPage() {
                       </Link>
                     ) : null}
                   </div>
-                  <input
-                    defaultValue={item.notes ?? ''}
-                    onBlur={(e) => {
-                      if ((e.target.value ?? '') !== (item.notes ?? '')) void updateNotes(item, e.target.value);
-                    }}
-                    placeholder="備註…"
-                    className="mt-0.5 h-8 w-full bg-transparent text-[11px] leading-none text-[var(--muted-fg)] outline-none placeholder:text-[var(--muted-fg)]/60 focus:text-[var(--fg)] [@media(hover:none)]:text-base [@media(hover:none)]:leading-tight sm:text-[11px]"
+                  <SetlistRowSettings
+                    item={item}
+                    saving={savingItemId === item.id}
+                    onChange={(patch) => updateItem(item, patch)}
                   />
                 </div>
-
-                <input
-                  defaultValue={item.selected_key ?? item.songs?.original_key ?? ''}
-                  onBlur={(e) => {
-                    const v = e.target.value.trim();
-                    if (v !== (item.selected_key ?? '')) void updateKey(item, v);
-                  }}
-                  placeholder="調"
-                  aria-label="本次調性"
-                  className="h-9 w-12 shrink-0 rounded-lg border border-[var(--border)] bg-transparent px-1.5 text-center font-mono text-xs outline-none focus:border-[var(--accent)]"
-                />
 
                 <div className="flex shrink-0 items-center">
                   <Button
@@ -429,8 +442,22 @@ export default function ListEditorPage() {
                   </Button>
                 </div>
               </li>
-            );
-          })}
+              {/* Gap between songs: the transition belongs to the pair, so it
+                  renders after the row rather than inside it. */}
+              {index < items.length - 1 ? (
+                <li className="flex justify-center py-0.5 pl-7">
+                  <TransitionPicker
+                    value={item.transition ?? null}
+                    note={item.transition_note ?? null}
+                    onChange={(transition, note) =>
+                      updateItem(item, { transition, transition_note: note })
+                    }
+                  />
+                </li>
+              ) : null}
+              </Fragment>
+          );
+        })}
         </ol>
       )}
 
