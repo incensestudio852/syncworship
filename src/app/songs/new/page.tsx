@@ -411,7 +411,11 @@ function NewSongForm() {
       </div>
 
       {/* 1 — file */}
-      <Card className="p-4">
+      <Card className="space-y-2 p-4">
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs font-medium text-[var(--muted-fg)]">識別語言：</span>
+          <span className="text-[11px] text-[var(--muted-fg)]">可多選，每種語言首次辨識需下載語言資料</span>
+        </div>
         <LanguagePicker value={ocrLangs} onChange={updateLangs} disabled={busy} />
         <div className="mt-3">
           <Label>樂譜檔案（JPG / PNG / PDF）</Label>
@@ -524,6 +528,58 @@ function NewSongForm() {
         ) : null}
       </Card>
 
+      {/* OCR status sits between the upload and the title fields: recognition
+          starts on upload, so its progress belongs next to where the file went. */}
+      {ocrState !== 'idle' ? (
+        <div
+          className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-3 ${
+            ocrState === 'running'
+              ? 'border-[var(--accent)]/40 bg-[var(--accent-soft)]'
+              : ocrState === 'done'
+                ? 'border-emerald-500/30 bg-emerald-500/10'
+                : 'border-amber-500/30 bg-amber-500/10'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {ocrState === 'running' ? (
+            <Loader2 size={18} className="mt-0.5 shrink-0 animate-spin text-[var(--accent)]" />
+          ) : ocrState === 'done' ? (
+            <ScanText size={18} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          ) : (
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p
+              className={`text-sm font-semibold ${
+                ocrState === 'running'
+                  ? 'text-[var(--accent)]'
+                  : ocrState === 'done'
+                    ? 'text-emerald-700 dark:text-emerald-300'
+                    : 'text-amber-700 dark:text-amber-300'
+              }`}
+            >
+              {ocrState === 'running'
+                ? `正在辨識歌詞${ocrPageLabel}`
+                : ocrState === 'done'
+                  ? '已辨識歌詞，請核對'
+                  : '未能辨識，請自行輸入歌詞'}
+            </p>
+            <p className="mt-0.5 text-xs text-[var(--muted-fg)]">
+              {ocrState === 'running'
+                ? '掃描樂譜需要 20–40 秒，完成後會自動填入下方欄位。你可以先填寫其他資料。'
+                : ocrState === 'done'
+                  ? sourceNote === 'text_layer'
+                    ? '直接讀取 PDF 文字，準確度較高。'
+                    : sheetKind === 'lead_sheet'
+                      ? '此為五線譜／簡譜，只匯入歌詞文字。'
+                      : '辨識結果可能有錯字或漏字，儲存前請檢查。'
+                  : '可能是圖片太模糊或空白頁，請自行輸入。'}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {/* 2 — metadata */}
       <Card className="space-y-3.5 p-4">
         <div className="flex items-center justify-between">
@@ -591,58 +647,6 @@ function NewSongForm() {
         </div>
 
       </Card>
-
-      {/* OCR status sits between 詩歌資料 and 歌詞: it is the step that fills
-          the lyrics, so it belongs right above them and must be visible. */}
-      {ocrState !== 'idle' ? (
-        <div
-          className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-3 ${
-            ocrState === 'running'
-              ? 'border-[var(--accent)]/40 bg-[var(--accent-soft)]'
-              : ocrState === 'done'
-                ? 'border-emerald-500/30 bg-emerald-500/10'
-                : 'border-amber-500/30 bg-amber-500/10'
-          }`}
-          role="status"
-          aria-live="polite"
-        >
-          {ocrState === 'running' ? (
-            <Loader2 size={18} className="mt-0.5 shrink-0 animate-spin text-[var(--accent)]" />
-          ) : ocrState === 'done' ? (
-            <ScanText size={18} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-          ) : (
-            <AlertCircle size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
-          )}
-          <div className="min-w-0 flex-1">
-            <p
-              className={`text-sm font-semibold ${
-                ocrState === 'running'
-                  ? 'text-[var(--accent)]'
-                  : ocrState === 'done'
-                    ? 'text-emerald-700 dark:text-emerald-300'
-                    : 'text-amber-700 dark:text-amber-300'
-              }`}
-            >
-              {ocrState === 'running'
-                ? `正在辨識歌詞${ocrPageLabel}`
-                : ocrState === 'done'
-                  ? '已辨識歌詞，請核對'
-                  : '未能辨識，請自行輸入歌詞'}
-            </p>
-            <p className="mt-0.5 text-xs text-[var(--muted-fg)]">
-              {ocrState === 'running'
-                ? '掃描樂譜需要 20–40 秒，完成後會自動填入下方欄位。你可以先填寫其他資料。'
-                : ocrState === 'done'
-                  ? sourceNote === 'text_layer'
-                    ? '直接讀取 PDF 文字，準確度較高。'
-                    : sheetKind === 'lead_sheet'
-                      ? '此為五線譜／簡譜，只匯入歌詞文字。'
-                      : '辨識結果可能有錯字或漏字，儲存前請檢查。'
-                  : '可能是圖片太模糊或空白頁，請自行輸入。'}
-            </p>
-          </div>
-        </div>
-      ) : null}
 
       <Card className="space-y-3.5 p-4">
         <div>
