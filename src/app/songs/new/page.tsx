@@ -797,6 +797,7 @@ function NewSongForm() {
           index={previewIndex}
           onClose={() => setPreviewIndex(null)}
           onIndexChange={setPreviewIndex}
+          hint="確認無誤後再儲存"
         />
       ) : null}
 
