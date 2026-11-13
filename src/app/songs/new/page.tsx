@@ -32,6 +32,7 @@ import { ImageLightbox } from '@/components/ImageLightbox';
 import { DEFAULT_OCR_LANGS, type OcrLangId } from '@/config';
 import { convertChartToInline } from '@/lib/chartToInline';
 import { parseFilename } from '@/lib/parseFilename';
+import { stripPunctuation } from '@/lib/stripPunctuation';
 import { uploadSheetPages } from '@/lib/storage';
 
 type ReadyPage = { blob: Blob; url: string; page: number };
@@ -151,8 +152,9 @@ function NewSongForm() {
 
   const applyRecognisedText = useCallback((raw: string) => {
     const converted = convertChartToInline(raw);
-    lyricsRef.current = converted.lyrics;
-    setLyrics(converted.lyrics);
+    const cleaned = stripPunctuation(converted.lyrics);
+    lyricsRef.current = cleaned;
+    setLyrics(cleaned);
     setChordCount(converted.chordsFound);
     setSheetKind(converted.kind);
     setOcrUnconfirmed(true);
