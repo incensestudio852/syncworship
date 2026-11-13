@@ -40,6 +40,10 @@ export type Song = {
   ocr_langs?: string[] | null;
   /** What the upload detected: chord_chart | lead_sheet | lyrics_only. */
   sheet_kind?: string | null;
+  /** Defaults copied into a setlist entry when the song is added. */
+  tempo?: number | null;
+  dynamic?: number | null;
+  flow?: FlowStep[] | null;
   created_at: string;
   updated_at: string;
 };
@@ -62,11 +66,27 @@ export type WorshipList = {
   updated_at: string;
 };
 
+/** One section of an arrangement, e.g. { section: 'C', count: 3 }. */
+export type FlowStep = { section: string; count?: number };
+
+/** Remarks bound to a flow section, keyed by section id. */
+export type FlowNotes = Record<string, string>;
+
 export type ListItem = {
   id: string;
   list_id: string;
   song_id: string;
+  /** Legacy label-only key, kept for older rows. */
   selected_key: string | null;
+  /** Key the team sings in; drives transposition. NULL = original key. */
+  service_key?: string | null;
+  tempo?: number | null;
+  transition?: string | null;
+  transition_note?: string | null;
+  /** Intensity 1-10 (1-3 quiet, 4-6 building, 7-10 full). */
+  dynamic?: number | null;
+  flow?: FlowStep[] | null;
+  flow_notes?: FlowNotes | null;
   sort_order: number;
   notes: string | null;
   updated_at: string;
