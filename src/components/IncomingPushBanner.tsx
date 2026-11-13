@@ -10,6 +10,18 @@ import { Radio, X } from 'lucide-react';
  * the song, and one small 切換 button. The sheet below stays readable, and the
  * receiver decides when to switch.
  */
+/**
+ * Song names are usually under ~12 characters, so the pill caps the field there.
+ * Longer titles are cut with an ellipsis rather than widening the banner; the
+ * full name remains available as a tooltip and in the list sidebar.
+ */
+const TITLE_MAX = 12;
+
+function truncateTitle(title: string): string {
+  const t = title.trim();
+  return t.length <= TITLE_MAX ? `《${t}》` : `《${t.slice(0, TITLE_MAX)}…》`;
+}
+
 export function IncomingPushBanner({
   title,
   by,
@@ -41,7 +53,9 @@ export function IncomingPushBanner({
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-semibold leading-tight">《{title}》</p>
+        <p className="truncate text-[13px] font-semibold leading-tight" title={title}>
+          {truncateTitle(title)}
+        </p>
         <p className="truncate text-[10px] leading-tight text-[var(--muted-fg)]">由 {by} 推送</p>
       </div>
 
