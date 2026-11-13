@@ -53,11 +53,13 @@ function NewSongForm() {
 
   const [title, setTitle] = useState(params.get('title') ?? '');
   const [originalKey, setOriginalKey] = useState('');
+  const [tempo, setTempo] = useState('');
   const [lyrics, setLyrics] = useState('');
   const lyricsRef = useRef('');
   // Mirrors of the text fields so async inference can fill only untouched ones.
   const titleRef = useRef('');
   const keyRef = useRef('');
+  const tempoRef = useRef('');
   const sourceRef = useRef('');
   const [tags, setTags] = useState('');
   const [source, setSource] = useState('');
@@ -137,6 +139,11 @@ function NewSongForm() {
             setSource(meta.source);
             flagged.add('source');
           }
+          if (meta.tempo && !tempoRef.current) {
+            tempoRef.current = String(meta.tempo);
+            setTempo(String(meta.tempo));
+            flagged.add('tempo');
+          }
           if (flagged.size) setHighlight((prev) => new Set([...prev, ...flagged]));
           applyRecognisedText(tl.text);
           setOcrState('done');
@@ -151,6 +158,22 @@ function NewSongForm() {
   );
 
   const applyRecognisedText = useCallback((raw: string) => {
+    // Scanned sheets reach this path instead of the text layer, so tempo and key
+    // are inferred here too. Only untouched fields are filled.
+    const meta = inferMetaFromText(raw);
+    const guessed = new Set<string>();
+    if (meta.originalKey && !keyRef.current) {
+      keyRef.current = meta.originalKey;
+      setOriginalKey(meta.originalKey);
+      guessed.add('original_key');
+    }
+    if (meta.tempo && !tempoRef.current) {
+      tempoRef.current = String(meta.tempo);
+      setTempo(String(meta.tempo));
+      guessed.add('tempo');
+    }
+    if (guessed.size) setHighlight((prev) => new Set([...prev, ...guessed]));
+
     const converted = convertChartToInline(raw);
     const cleaned = stripPunctuation(converted.lyrics);
     lyricsRef.current = cleaned;
@@ -361,6 +384,7 @@ function NewSongForm() {
           ocr_langs: ocrLangsRef.current,
           sheet_kind: sheetKind,
           original_key: originalKey.trim() || null,
+          tempo: tempo.trim() ? Number(tempo) : null,
           tags: tagArr.length ? tagArr : null,
           source: source.trim() || null,
           composer: composer.trim() || null,
@@ -659,8 +683,28 @@ function NewSongForm() {
               className="font-mono"
             />
           </Field>
-          <Field label="出處" highlight={highlight.has('source')}>
+          <Field label="速度 BPM" highlight={highlight.has('tempo')}>
             <Input
+              value={tempo}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
+                tempoRef.current = v;
+                setTempo(v);
+                setHighlight((s) => {
+                  const n = new Set(s);
+                  n.delete('tempo');
+                  return n;
+                });
+              }}
+              inputMode="numeric"
+              placeholder="例：72"
+              className="font-mono"
+            />
+          </Field>
+        </div>
+
+        <Field label="出處" highlight={highlight.has('source')}>
+          <Input
               value={source}
               onChange={(e) => {
                 sourceRef.current = e.target.value;
@@ -673,8 +717,7 @@ function NewSongForm() {
               }}
               placeholder="例：讚美之泉"
             />
-          </Field>
-        </div>
+        </Field>
 
       </Card>
 

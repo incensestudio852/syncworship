@@ -11,11 +11,13 @@ export type SheetMeta = {
   title?: string;
   originalKey?: string;
   source?: string;
+  /** Beats per minute, when the sheet prints one. */
+  tempo?: number;
 };
 
 /** Lines that are never a song title. */
 const NOT_TITLE =
-  /^(verse|chorus|bridge|pre|intro|outro|tag|ending|interlude|instrumental|vocal|piano|key\b|tempo\b|copyright|©|\(|page\s*\d)/i;
+  /^(verse|chorus|bridge|pre|intro|outro|tag|ending|interlude|instrumental|vocal|piano|key\b|tempo\b|bpm\b|♩|copyright|©|\(|page\s*\d)/i;
 
 /** Credit lines ("曲/詞 李俊霆", "Words and Music by …") are never the title. */
 const CREDIT =
@@ -147,6 +149,24 @@ export function inferMetaFromText(text: string): SheetMeta {
       const qualifier = (m[3] ?? '').toLowerCase();
       const minor = qualifier === 'm' || qualifier === 'min' || qualifier === 'minor';
       meta.originalKey = `${root}${acc}${minor ? 'm' : ''}`;
+      break;
+    }
+  }
+
+  // ---- tempo: "Tempo 64", "♩=72", "BPM: 80", "Gently J=73" ---------------
+  // Charts write tempo in several ways; OCR often turns the quarter-note glyph
+  // into "J" or "d", so both are accepted. Range 20-300 rejects bar numbers
+  // and page numbers that happen to sit near the word "tempo".
+  for (const line of lines.slice(0, 14)) {
+    const m =
+      line.match(/\btempo\s*[:=]?\s*(\d{2,3})/i) ??
+      line.match(/\bbpm\s*[:=]?\s*(\d{2,3})/i) ??
+      line.match(/[♩JdD]\s*[=:]\s*(\d{2,3})/) ??
+      line.match(/[♩JdD]\s*(\d{2,3})\b/);
+    if (!m) continue;
+    const bpm = Number(m[1]);
+    if (bpm >= 20 && bpm <= 300) {
+      meta.tempo = bpm;
       break;
     }
   }
