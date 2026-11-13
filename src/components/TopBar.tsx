@@ -58,7 +58,7 @@ export function TopBar() {
           <Link
             href="/settings/"
             aria-label="設定"
-            className="inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-xl px-2.5 text-[var(--muted-fg)] transition-colors hover:bg-[var(--soft)] hover:text-[var(--fg)] max-sm:hidden"
+            className="inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-xl px-2 text-[var(--muted-fg)] transition-colors hover:bg-[var(--soft)] hover:text-[var(--fg)] sm:px-2.5"
           >
             <Settings2 size={17} />
           </Link>
