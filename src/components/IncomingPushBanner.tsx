@@ -5,9 +5,10 @@ import { Radio, X } from 'lucide-react';
 /**
  * Receiver-side broadcast offer.
  *
- * A push from another device does not take over this screen — it appears here
- * as a choice, so a receiver mid-song is never interrupted. Slides in from the
- * top so it doesn't collide with the bottom control bar.
+ * A push from another device never takes over this screen. It appears centred
+ * in the middle of the stage as a compact card — wide enough to name the song
+ * and its sender, narrow enough to leave the sheet readable around it — and the
+ * receiver decides when to switch.
  */
 export function IncomingPushBanner({
   title,
@@ -22,32 +23,33 @@ export function IncomingPushBanner({
 }) {
   return (
     <div
-      className="pointer-events-auto absolute inset-x-2 top-10 z-40 flex items-center gap-2 rounded-xl border border-[var(--accent)]/40 bg-[var(--card)]/97 px-2.5 py-2 shadow-lg backdrop-blur sm:inset-x-4 sm:top-11"
+      className="pointer-events-auto absolute left-1/2 top-1/2 z-40 flex w-[min(84vw,290px)] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2.5 rounded-2xl border border-[var(--accent)]/40 bg-[var(--card)]/97 px-4 py-4 text-center shadow-xl backdrop-blur"
       role="status"
       aria-live="polite"
       aria-label="收到推送"
     >
-      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-white">
-        <Radio size={15} />
+      <button
+        onClick={onDismiss}
+        aria-label="留在目前詩歌"
+        className="absolute right-1.5 top-1.5 grid h-8 w-8 place-items-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--soft)]"
+      >
+        <X size={15} />
+      </button>
+
+      <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--accent)] text-white">
+        <Radio size={16} />
       </span>
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold">《{title}》已推送到台上</p>
-        <p className="truncate text-[11px] text-[var(--muted-fg)]">由 {by} 推送</p>
+      <div className="min-w-0">
+        <p className="line-clamp-2 text-sm font-semibold leading-snug">《{title}》</p>
+        <p className="mt-0.5 truncate text-[11px] text-[var(--muted-fg)]">由 {by} 推送</p>
       </div>
 
       <button
         onClick={onAccept}
-        className="min-h-[40px] shrink-0 rounded-lg bg-[var(--accent)] px-3.5 text-[13px] font-semibold text-white"
+        className="min-h-[42px] w-full rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white"
       >
         切換
-      </button>
-      <button
-        onClick={onDismiss}
-        aria-label="留在目前詩歌"
-        className="grid h-10 w-9 shrink-0 place-items-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--soft)]"
-      >
-        <X size={16} />
       </button>
     </div>
   );
