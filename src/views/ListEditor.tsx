@@ -388,12 +388,13 @@ export default function ListEditorPage() {
                   isLive ? 'border-[var(--gold)]' : 'border-[var(--border)]'
                 }`}
               >
-                {/* Whole SONG blocks are drag-reordered, so this stays a grip
-                    handle. The arrow belongs to flow-editor rows, which have no
-                    drag and move one step per tap. */}
+                {/* Sequence number and grab handle share one column: the number
+                    is the label, the grip is the affordance, and the whole cell
+                    is the drag/tap target. Two columns cost ~28px that the
+                    song title needs more than the number does. */}
                 <button
-                  className="grid min-h-[36px] w-7 cursor-grab touch-none place-items-center text-[var(--muted-fg)] active:cursor-grabbing"
-                  aria-label="拖曳排序"
+                  className="group/grab flex min-h-[44px] w-8 shrink-0 cursor-grab touch-none flex-col items-center justify-start gap-0.5 pt-0.5 text-[var(--muted-fg)] active:cursor-grabbing"
+                  aria-label={`第 ${index + 1} 首，拖曳排序`}
                   title="拖曳排序；手機上點一下前移，長按後移"
                   onClick={() => moveBy(index, -1)}
                   onContextMenu={(e) => {
@@ -401,12 +402,9 @@ export default function ListEditorPage() {
                     moveBy(index, 1);
                   }}
                 >
-                  <GripVertical size={15} />
+                  <GripVertical size={13} className="opacity-60 transition-opacity group-hover/grab:opacity-100" />
+                  <span className="font-mono text-[11px] leading-none tabular-nums">{index + 1}</span>
                 </button>
-
-                <span className="w-5 shrink-0 text-center font-mono text-xs text-[var(--muted-fg)]">
-                  {index + 1}
-                </span>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
