@@ -48,6 +48,18 @@ out/
 npx wrangler pages deploy out --project-name sync-worship
 ```
 
+## CantonHymn lyric lookup (Pages Function)
+
+`functions/api/cantonhymn.ts` proxies lyric lookups so the static site can call
+CantonHymn, whose API sends no CORS header. Pages picks `functions/` up
+automatically on deploy — no config needed.
+
+- Local dev must use `wrangler pages dev` so the Function is served:
+  `npx wrangler pages dev out --port 4173`
+  Plain `python -m http.server` serves the static files but **not** the API, so
+  the lyric button will fail there.
+- Requires the Cloudflare Pages runtime; it does not work on GitHub Pages.
+
 ## After the first deploy — do not skip
 
 **1. Add the domain to Supabase Auth.**

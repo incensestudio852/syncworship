@@ -7,6 +7,8 @@ import {
   AlertCircle,
   ArrowLeft,
   Check,
+  CheckCircle2,
+  Download,
   FileText,
   ImagePlus,
   Loader2,
@@ -34,6 +36,7 @@ import { convertChartToInline } from '@/lib/chartToInline';
 import { parseFilename } from '@/lib/parseFilename';
 import { stripPunctuation } from '@/lib/stripPunctuation';
 import { uploadSheetPages } from '@/lib/storage';
+import { canLookup, fetchLyrics, normaliseLyrics, type CantonHymnSong } from '@/lib/cantonhymn';
 
 type ReadyPage = { blob: Blob; url: string; page: number };
 type Stage = 'idle' | 'rendering' | 'uploading' | 'saving';
@@ -54,6 +57,23 @@ function NewSongForm() {
   const [title, setTitle] = useState(params.get('title') ?? '');
   const [originalKey, setOriginalKey] = useState('');
   const [tempo, setTempo] = useState('');
+
+  /**
+   * CantonHymn lookup state.
+   *
+   * Filled as a SUGGESTION, never applied silently: the fetched lyrics replace
+   * a textarea the user may have already edited, so the button reports what it
+   * found and the user chooses. `pendingOverwrite` holds a result that would
+   * clobber existing lyrics and is waiting on confirmation.
+   */
+  const [lookup, setLookup] = useState<
+    | { state: 'idle' }
+    | { state: 'busy' }
+    | { state: 'done'; song: CantonHymnSong }
+    | { state: 'miss' }
+    | { state: 'error'; message: string }
+    | { state: 'confirm'; song: CantonHymnSong }
+  >({ state: 'idle' });
   const [lyrics, setLyrics] = useState('');
   const lyricsRef = useRef('');
   // Mirrors of the text fields so async inference can fill only untouched ones.
@@ -65,6 +85,9 @@ function NewSongForm() {
   const [source, setSource] = useState('');
   const [composer, setComposer] = useState('');
   const [lyricist, setLyricist] = useState('');
+  // Tracks user edits so a CantonHymn result can't overwrite typed input.
+  const composerRef = useRef('');
+  const lyricistRef = useRef('');
 
   const [highlight, setHighlight] = useState<Set<string>>(new Set());
   const [pages, setPages] = useState<ReadyPage[]>([]);
@@ -218,6 +241,81 @@ function NewSongForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+
+  /** Write a fetched song into the form, touching only fields still empty. */
+  const applyCanton = useCallback((song: CantonHymnSong) => {
+    const filled: string[] = [];
+
+    const text = normaliseLyrics(song.lyrics);
+    if (text.trim()) {
+      lyricsRef.current = text;
+      setLyrics(text);
+      setOcrUnconfirmed(false);
+      setHighlight((prev) => {
+        const n = new Set(prev);
+        n.delete('lyrics');
+        return n;
+      });
+      filled.push('歌詞');
+    }
+
+    // Only fill metadata the user has not provided: a sheet they uploaded is
+    // more specific than the wiki entry (different arrangement, different key).
+    if (song.key && !keyRef.current) {
+      keyRef.current = song.key;
+      setOriginalKey(song.key);
+      filled.push('原調');
+    }
+    if (song.composer && !composerRef.current) {
+      composerRef.current = song.composer;
+      setComposer(song.composer);
+      filled.push('作曲');
+    }
+    if (song.lyricist && !lyricistRef.current) {
+      lyricistRef.current = song.lyricist;
+      setLyricist(song.lyricist);
+      filled.push('作詞');
+    }
+    if (song.title && !titleRef.current) {
+      titleRef.current = song.title;
+      setTitle(song.title);
+      setTitleNeedsInput(false);
+      filled.push('歌名');
+    }
+
+    setLookup({ state: 'done', song });
+    toast(
+      filled.length ? `已從 CantonHymn 帶入：${filled.join('、')}` : 'CantonHymn 的資料與已填欄位相同，未改動。',
+      filled.length ? 'success' : 'info',
+    );
+  }, []);
+
+  /**
+   * Look the title up on CantonHymn.
+   *
+   * Existing lyrics are protected: if the textarea already has content, the
+   * result is staged behind a confirmation instead of overwriting work.
+   */
+  const lookupLyrics = useCallback(async () => {
+    const t = title.trim();
+    if (!canLookup(t)) {
+      toast('請先輸入至少兩個字的歌名。', 'error');
+      return;
+    }
+    setLookup({ state: 'busy' });
+    const res = await fetchLyrics(t);
+    if (res.status === 'found') {
+      if (lyricsRef.current.trim()) {
+        setLookup({ state: 'confirm', song: res.song });
+      } else {
+        applyCanton(res.song);
+      }
+    } else if (res.status === 'not_found') {
+      setLookup({ state: 'miss' });
+    } else {
+      setLookup({ state: 'error', message: res.message });
+    }
+  }, [title, applyCanton]);
 
   /**
    * Handle one or more chosen files.
@@ -666,6 +764,81 @@ function NewSongForm() {
           />
         </Field>
 
+        {/* CantonHymn lookup — only meaningful once there is a title to look up. */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--card-2,var(--card))] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => void lookupLyrics()}
+              disabled={lookup.state === 'busy' || !canLookup(title) || busy}
+            >
+              {lookup.state === 'busy' ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              從 CantonHymn 帶入歌詞
+            </Button>
+            <span className="text-[11px] text-[var(--muted-fg)]">
+              {canLookup(title) ? '以歌名搜尋，含和弦及曲詞資料' : '輸入歌名後可查詢'}
+            </span>
+          </div>
+
+          {lookup.state === 'done' ? (
+            <p className="mt-2 flex items-center gap-1.5 text-[12px] text-emerald-500">
+              <CheckCircle2 size={13} className="shrink-0" />
+              已從 CantonHymn 帶入《{lookup.song.title}》
+              {lookup.song.sourceUrl ? (
+                <a
+                  href={lookup.song.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  查看原頁
+                </a>
+              ) : null}
+            </p>
+          ) : null}
+
+          {lookup.state === 'miss' ? (
+            <p className="mt-2 flex items-start gap-1.5 text-[12px] text-[var(--muted-fg)]">
+              <AlertCircle size={13} className="mt-0.5 shrink-0" />
+              找不到《{title.trim()}》。請確認歌名與 CantonHymn 上的寫法一致，或手動輸入歌詞。
+            </p>
+          ) : null}
+
+          {lookup.state === 'confirm' ? (
+            <div className="mt-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5">
+              <p className="text-[12px] text-[var(--fg)]">
+                找到《{lookup.song.title}》，但歌詞欄已有內容（{lyrics.length} 字）。要覆蓋嗎？
+              </p>
+              <div className="mt-2 flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => applyCanton(lookup.song)}
+                >
+                  覆蓋歌詞
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setLookup({ state: 'idle' })}
+                >
+                  保留現有
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {lookup.state === 'error' ? (
+            <p className="mt-2 flex items-start gap-1.5 text-[12px] text-amber-500">
+              <AlertCircle size={13} className="mt-0.5 shrink-0" />
+              {lookup.message}
+            </p>
+          ) : null}
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Field label="原調" highlight={highlight.has('original_key')}>
             <Input
@@ -751,11 +924,23 @@ function NewSongForm() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label>作曲</Label>
-            <Input value={composer} onChange={(e) => setComposer(e.target.value)} />
+            <Input
+              value={composer}
+              onChange={(e) => {
+                composerRef.current = e.target.value;
+                setComposer(e.target.value);
+              }}
+            />
           </div>
           <div>
             <Label>作詞</Label>
-            <Input value={lyricist} onChange={(e) => setLyricist(e.target.value)} />
+            <Input
+              value={lyricist}
+              onChange={(e) => {
+                lyricistRef.current = e.target.value;
+                setLyricist(e.target.value);
+              }}
+            />
           </div>
         </div>
 
