@@ -27,6 +27,7 @@ import { signPaths } from '@/lib/storage';
 import { chordList, hasChords } from '@/lib/chords';
 import { Button, Card, Field, Input, Label, Spinner } from '@/components/ui';
 import { ChordLyrics } from '@/components/ChordLyrics';
+import { ImageLightbox } from '@/components/ImageLightbox';
 import { ConfirmDelete, ConfirmDialog } from '@/components/ConfirmDialogs';
 import { useToast } from '@/components/Toast';
 
@@ -62,6 +63,7 @@ export default function SongDetailPage() {
 
   const [sheets, setSheets] = useState<SongSheet[]>([]);
   const [thumbs, setThumbs] = useState<Map<string, string>>(new Map());
+  const [lightboxAt, setLightboxAt] = useState<number | null>(null);
   const [addingPages, setAddingPages] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
   const [delBusy, setDelBusy] = useState(false);
@@ -502,12 +504,21 @@ export default function SongDetailPage() {
                 className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-[var(--border)] bg-white"
               >
                 {thumbs.get(s.file_url) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={thumbs.get(s.file_url)}
-                    alt={`第 ${s.page_number} 頁`}
-                    className="h-full w-full object-cover"
-                  />
+                  // Reading a sheet means reading the whole page: tapping a
+                  // thumbnail opens it full screen, scroll-zoom included.
+                  <button
+                    type="button"
+                    onClick={() => setLightboxAt(i)}
+                    aria-label={`放大第 ${i + 1} 頁`}
+                    className="block h-full w-full cursor-zoom-in"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={thumbs.get(s.file_url)}
+                      alt={`第 ${s.page_number} 頁`}
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
                 ) : (
                   <div className="grid h-full place-items-center text-[10px] text-slate-400">
                     無法載入
@@ -582,6 +593,19 @@ export default function SongDetailPage() {
         onCancel={() => setDelOpen(false)}
         onConfirm={() => void deleteSong()}
       />
+
+      {/* Full-screen sheet viewer. Uses the same signed URLs as the thumbnails,
+          so no extra network round-trip. */}
+      {lightboxAt !== null ? (
+        <ImageLightbox
+          pages={sheets
+            .filter((sh) => thumbs.get(sh.file_url))
+            .map((sh) => ({ url: thumbs.get(sh.file_url) as string, page: sh.page_number }))}
+          index={lightboxAt}
+          onClose={() => setLightboxAt(null)}
+          onIndexChange={setLightboxAt}
+        />
+      ) : null}
     </div>
   );
 }
