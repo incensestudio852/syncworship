@@ -1,0 +1,21 @@
+{
+  // Sync Worship is a pure static export (next.config.ts sets output: 'export'),
+  // so it deploys as static assets — NOT via the OpenNext adapter.
+  //
+  // Without this file, `npx wrangler deploy` auto-detects Next.js and assumes a
+  // server app, then looks for .next/standalone/.next/server/pages-manifest.json
+  // and fails. Pinning `assets.directory` to `out` prevents that autoconfig.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "syncworship",
+  "compatibility_date": "2026-11-10",
+  "assets": {
+    "directory": "./out",
+    // Every route is a real directory with index.html (trailingSlash: true), so
+    // assets map 1:1 onto URLs. 404-page keeps unknown paths honest instead of
+    // silently serving the app shell.
+    "not_found_handling": "404-page"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
