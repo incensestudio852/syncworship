@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>舞台模式</title>
+<link rel="stylesheet" href="base.css" />
+<style>
+  .split{display:grid; grid-template-columns:392px 1fr; gap:52px; margin-top:30px; align-items:start;}
+  .phone{
+    position:relative; border-radius:22px; overflow:hidden; background:#fff;
+    border:8px solid #1b1b1e; box-shadow:0 16px 40px rgba(20,30,50,.15);
+  }
+  .phone img{display:block; width:100%;}
+  /* Pins anchor to the image box, not the phone box: the 8px bezel
+     otherwise shifted every marker down-right by ~2%. */
+  .shot{position:relative;}
+
+
+  .legend{display:flex; flex-direction:column; gap:15px; padding-top:2px;}
+  .li{display:flex; gap:12px;}
+  .li .k{
+    flex:none; width:26px; height:26px; border-radius:50%; background:var(--gold); color:#fff;
+    font-size:13px; font-weight:700; display:grid; place-items:center; margin-top:1px;
+  }
+  .li b{display:block; font-size:15.5px; font-weight:650; margin-bottom:3px;}
+  .li p{font-size:13px; color:var(--muted); line-height:1.55;}
+
+  .devices{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:20px;}
+  .d{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 13px;}
+  .d b{display:block; font-size:13.5px; font-weight:650; margin-bottom:4px;}
+  .d p{font-size:12px; color:var(--muted); line-height:1.6;}
+  .mk{font-family:ui-monospace,Menlo,monospace; font-size:11px; color:var(--accent);
+      background:rgba(30,58,95,.07); border-radius:4px; padding:1px 4px; margin-right:4px;
+      white-space:nowrap; display:inline-block;}
+</style>
+</head>
+<body>
+
+<div class="kicker">第 4 頁 · 舞台模式</div>
+<h1>樂譜、歌詞、段落，<em>在同一個畫面</em>。</h1>
+<p class="lead">
+  舞台模式把當前的歌放到最大。和弦與歌詞可以直接對照，
+  段落指標顯示調性、速度與流程，底部工具列處理翻頁與夜間模式。
+</p>
+
+<div class="split">
+  <div class="phone">
+    <div class="shot">
+      <img src="../s3_stage.png" alt="舞台模式" />
+    <span class="pin" style="left:7.5%; top:1.7%">I</span>
+    <span class="pin" style="left:79.7%; top:1.7%">J</span>
+    <span class="pin" style="left:83.4%; top:12.4%">K</span>
+    <span class="pin" style="left:95.7%; top:74.0%">L</span>
+    <span class="pin" style="left:33.3%; top:94.8%">M</span>
+    </div>
+  </div>
+
+  <div>
+    <div class="legend">
+      <div class="li"><span class="k">I</span>
+        <div><b>連線狀態</b>
+          <p>綠點代表已連線。斷線時自動改用已快取的樂譜，並在畫面提示。</p></div></div>
+
+      <div class="li"><span class="k">J</span>
+        <div><b>Live 標示</b>
+          <p>確認這部裝置正在跟隨台上畫面。若不是，可從側欄自行切換。</p></div></div>
+
+      <div class="li"><span class="k">K</span>
+        <div><b>段落指標</b>
+          <p>調性、BPM、段落流程與動態。手機預設收起，平板與電腦預設展開。</p></div></div>
+
+      <div class="li"><span class="k">L</span>
+        <div><b>敬拜清單側欄</b>
+          <p>隨時查看接下來的歌與進度，也可以在這裡推送。電腦可收起，讓樂譜用盡畫面。</p></div></div>
+
+      <div class="li"><span class="k">M</span>
+        <div><b>底部工具列</b>
+          <p>翻頁、歌詞與樂譜切換、夜間模式、全螢幕、離開。</p></div></div>
+    </div>
+
+    <div class="devices">
+      <div class="d"><b>電腦與筆電</b><p>左側有直向縮放列，100–300%，方便細看和弦。</p></div>
+      <div class="d"><b>段落標記</b><p>歌詞中的 <span class="mk">[Verse]</span><span class="mk">[Chorus]</span> 會顯示成分段標籤，演奏時一眼找到副歌。</p></div>
+      <div class="d"><b>螢幕常亮</b><p>進入舞台後保持亮屏，不會中途變黑。</p></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>手機不顯示縮放列，避免遮住樂譜；需要放大時可雙指縮放。</div>
+  <div class="brand"><b>Sync Worship</b>敬拜直播 · 即時同步</div>
+</footer>
+
+</body>
+</html>

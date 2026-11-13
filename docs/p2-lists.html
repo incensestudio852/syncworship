@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<title>敬拜清單</title>
+<link rel="stylesheet" href="base.css" />
+<style>
+  .split{display:grid; grid-template-columns:392px 1fr; gap:52px; margin-top:30px; align-items:start;}
+  .phone{
+    position:relative; border-radius:22px; overflow:hidden; background:#fff;
+    border:8px solid #1b1b1e; box-shadow:0 16px 40px rgba(20,30,50,.15);
+  }
+  .phone img{display:block; width:100%;}
+  /* Pins anchor to the image box, not the phone box: the 8px bezel
+     otherwise shifted every marker down-right by ~2%. */
+  .shot{position:relative;}
+
+
+  .legend{display:flex; flex-direction:column; gap:17px; padding-top:4px;}
+  .li{display:flex; gap:12px;}
+  .li .k{
+    flex:none; width:26px; height:26px; border-radius:50%; background:var(--gold); color:#fff;
+    font-size:13px; font-weight:700; display:grid; place-items:center; margin-top:1px;
+  }
+  .li b{display:block; font-size:16px; font-weight:650; margin-bottom:3px;}
+  .li p{font-size:13.5px; color:var(--muted); line-height:1.55;}
+
+  .aside{
+    margin-top:22px; background:var(--card); border:1px solid var(--line);
+    border-left:3px solid var(--gold); border-radius:10px; padding:15px 17px;
+  }
+  .aside b{font-size:14px; display:block; margin-bottom:5px;}
+  .aside p{font-size:13px; color:var(--muted); line-height:1.6;}
+  .aside code{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; color:var(--accent);}
+</style>
+</head>
+<body>
+
+<div class="kicker">第 2 頁 · 敬拜清單</div>
+<h1>把程序排好，<em>一按上台</em>。</h1>
+<p class="lead">
+  清單就是當日的敬拜程序。每首歌可設定服務調性、速度與段落流程，
+  排好次序之後按推送，全隊的畫面同時跟上。
+</p>
+
+<div class="split">
+  <div class="phone">
+    <div class="shot">
+      <img src="../s1_lists.png" alt="敬拜清單" />
+    <span class="pin" style="left:81.5%; top:9.8%">A</span>
+    <span class="pin" style="left:6.0%; top:23.4%">B</span>
+    <span class="pin" style="left:90.3%; top:46.5%">C</span>
+    <span class="pin" style="left:4.8%; top:45.4%">D</span>
+    <span class="pin" style="left:25.3%; top:50.0%">E</span>
+    </div>
+  </div>
+
+  <div>
+    <div class="legend">
+      <div class="li"><span class="k">A</span>
+        <div><b>開啟舞台模式</b>
+          <p>進入全螢幕舞台。手機、平板、電腦都可以，全隊看同一個畫面。</p></div></div>
+
+      <div class="li"><span class="k">B</span>
+        <div><b>Live 狀態</b>
+          <p>顯示台上正在唱的詩歌，以及是哪部裝置推送。一眼知道進度走到哪裡。</p></div></div>
+
+      <div class="li"><span class="k">C</span>
+        <div><b>推送</b>
+          <p>即時送歌上台。隊友會收到提示，自己決定何時切換，不必中斷正在唱的段落。</p></div></div>
+
+      <div class="li"><span class="k">D</span>
+        <div><b>把手與序號</b>
+          <p>曲目次序與拖曳把手合併成一欄，騰出空間給歌名。點一下前移，長按後移。</p></div></div>
+
+      <div class="li"><span class="k">E</span>
+        <div><b>調性、速度、段落</b>
+          <p>每首歌可設定服務調性、BPM 與段落流程。加入時自動代入詩歌庫的數值，不用重打。</p></div></div>
+    </div>
+
+    <div class="aside">
+      <b>段落流程提示</b>
+      <p>流程寫成 <code>Intro → V1 → C → V2 → C×2 → B → C×3</code>。
+      每個段落可以標上 1–10 級的動態，台上顯示時會用顏色區分安靜與全開。</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>清單超過三個月會自動清理，需要的話記得先複製一份。</div>
+  <div class="brand"><b>Sync Worship</b>敬拜直播 · 即時同步</div>
+</footer>
+
+</body>
+</html>
