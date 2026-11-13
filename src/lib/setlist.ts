@@ -12,7 +12,7 @@
 export const TRANSITIONS = [
   { id: 'stop', label: '直接停頓' },
   { id: 'pad', label: 'Pad 鋪底' },
-  { id: 'segue', label: '無縫接歌 Segue' },
+  { id: 'segue', label: '無縫接歌' },
   { id: 'prayer', label: '禱告或讀經' },
   { id: 'other', label: '其他' },
 ] as const;
@@ -32,8 +32,8 @@ export const FLOW_SECTIONS = [
   'Pre-C',
   'C',
   'B',
-  'Bridge',
   'Tag',
+  '自由敬拜',
   'Outro',
 ] as const;
 
