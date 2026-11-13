@@ -35,7 +35,7 @@ export function IncomingPushBanner({
 }) {
   return (
     <div
-      className="pointer-events-auto absolute left-1/2 top-10 z-40 flex w-[min(92vw,340px)] -translate-x-1/2 items-center gap-2 rounded-full border border-[var(--accent)]/40 bg-[var(--card)]/97 py-1 pl-1 pr-1.5 shadow-lg backdrop-blur"
+      className="pointer-events-auto absolute left-1/2 top-10 z-40 flex w-max max-w-[min(80vw,280px)] -translate-x-1/2 items-center gap-1.5 rounded-full border border-[var(--accent)]/40 bg-[var(--card)]/97 py-1 pl-1 pr-1.5 shadow-lg backdrop-blur"
       role="status"
       aria-live="polite"
       aria-label="收到推送"
@@ -61,7 +61,7 @@ export function IncomingPushBanner({
 
       <button
         onClick={onAccept}
-        className="min-h-[32px] shrink-0 rounded-full bg-[var(--accent)] px-3 text-[12px] font-semibold text-white"
+        className="min-h-[30px] shrink-0 rounded-full bg-[var(--accent)] px-2.5 text-[12px] font-semibold text-white"
       >
         切換
       </button>
