@@ -504,6 +504,7 @@ export default function StagePage() {
             hidden={metricsHidden}
             onToggleHidden={() => setMetricsHidden((v) => !v)}
             onOpenDetails={() => setDetailsOpen(true)}
+            pushedDown={Boolean(pending)}
           />
         ) : null}
 

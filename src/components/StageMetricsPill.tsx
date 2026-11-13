@@ -18,6 +18,7 @@ export function StageMetricsPill({
   hidden,
   onToggleHidden,
   onOpenDetails,
+  pushedDown,
 }: {
   item: ListItem;
   /** Key actually being sung (service key, shifted by the transpose offset). */
@@ -26,6 +27,8 @@ export function StageMetricsPill({
   hidden: boolean;
   onToggleHidden: () => void;
   onOpenDetails: () => void;
+  /** True while an incoming-push banner occupies the top of the stage. */
+  pushedDown?: boolean;
 }) {
   const tempo = item.tempo ?? item.songs?.tempo ?? null;
 
@@ -47,7 +50,7 @@ export function StageMetricsPill({
       <button
         onClick={onToggleHidden}
         aria-label="顯示歌曲資訊"
-        className="absolute right-2 top-10 z-20 grid h-8 w-8 place-items-center rounded-lg border border-[var(--border)] bg-[var(--card)]/95 text-[var(--muted-fg)] shadow-sm backdrop-blur sm:hidden"
+        className={`absolute right-2 ${pushedDown ? 'top-[60px]' : 'top-10'} z-20 grid h-8 w-8 place-items-center rounded-lg border border-[var(--border)] bg-[var(--card)]/95 text-[var(--muted-fg)] shadow-sm backdrop-blur sm:hidden`}
       >
         <span className="text-[10px] font-semibold">i</span>
       </button>
@@ -55,7 +58,7 @@ export function StageMetricsPill({
   }
 
   return (
-    <div className="absolute right-2 top-10 z-20 max-w-[70vw] rounded-xl border border-[var(--border)] bg-[var(--card)]/95 px-2 py-1.5 shadow-sm backdrop-blur sm:hidden">
+    <div className={`absolute right-2 ${pushedDown ? 'top-[60px]' : 'top-10'} z-20 max-w-[70vw] rounded-xl border border-[var(--border)] bg-[var(--card)]/95 px-2 py-1.5 shadow-sm backdrop-blur sm:hidden`}>
       {/* One value per line: key / tempo / dynamic / flow read as a stacked
           column, which is easier to scan mid-song than a wrapped row. */}
       <div className="flex items-start justify-between gap-1">
