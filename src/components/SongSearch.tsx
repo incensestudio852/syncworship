@@ -4,13 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { CFG } from '@/config';
 import { supabase } from '@/lib/supabase';
+import { highlight } from '@/lib/highlight';
 
 export type SearchHit = {
   id: string;
   title: string;
   original_key: string | null;
   tags: string[] | null;
+  /** Only present on rows fetched by the lyrics query. */
+  lyrics?: string | null;
 };
+
+/** A hit plus why it matched, so the row can explain itself. */
+export type RankedHit = SearchHit & { snippet?: string };
 
 /** Debounced server-side search via the `search_songs` RPC (trigram-indexed, 10k-safe). */
 export function useSongSearch(query: string) {
@@ -37,10 +43,34 @@ export function useSongSearch(query: string) {
       if (err) {
         setError(err.message);
         setHits([]);
-      } else {
-        setError(null);
-        setHits((data as SearchHit[]) ?? []);
+        setLoading(false);
+        return;
       }
+
+      const titleHits = (data as SearchHit[]) ?? [];
+
+      // Lyrics are not part of the RPC's result shape (changing it would need a
+      // migration), so run one narrow ILIKE query for lyric matches and append
+      // the rows that are not already present. Bounded by the same limit and
+      // client-cancelled via `seq`, so a fast typer cannot pile up requests.
+      let lyricHits: SearchHit[] = [];
+      try {
+        const { data: lyr } = await supabase()
+          .from('songs')
+          .select('id,title,original_key,tags,lyrics')
+          .ilike('lyrics', `%${q}%`)
+          .limit(CFG.SEARCH_LIMIT);
+        lyricHits = ((lyr as SearchHit[]) ?? []).filter(
+          (l) => !titleHits.some((t) => t.id === l.id),
+        );
+      } catch {
+        // Lyrics search is a bonus; never fail the whole search over it.
+        lyricHits = [];
+      }
+      if (id !== seq.current) return;
+
+      setError(null);
+      setHits([...titleHits, ...lyricHits]);
       setLoading(false);
     }, CFG.SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(t);
@@ -61,6 +91,19 @@ export function SongSearch({
   const [q, setQ] = useState('');
   const { hits, loading, error } = useSongSearch(q);
   const showList = q.trim().length > 0;
+  const needle = q.trim().toLowerCase();
+  const titleIds = new Set(
+    hits.filter((h) => h.title.toLowerCase().includes(needle)).map((h) => h.id),
+  );
+  /** Surrounding lyric text for a row that matched only in the lyrics. */
+  const snippetFor = (h: SearchHit): string | null => {
+    if (!h.lyrics || titleIds.has(h.id)) return null;
+    const plain = h.lyrics.replace(/\[[^\]]*\]/g, '');
+    const at = plain.toLowerCase().indexOf(needle);
+    if (at < 0) return null;
+    const from = Math.max(0, at - 10);
+    return (from > 0 ? '…' : '') + plain.slice(from, from + 30).replace(/\s+/g, ' ').trim();
+  };
 
   return (
     <div className="relative">
@@ -109,9 +152,19 @@ export function SongSearch({
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-left hover:bg-[var(--soft)]"
                   >
-                    <span className="flex-1 truncate text-sm">{h.title}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm">{highlight(h.title, q)}</span>
+                      {snippetFor(h) ? (
+                        <span className="mt-0.5 flex items-center gap-1 text-[11px] text-[var(--accent)]">
+                          <span className="shrink-0 rounded bg-[var(--accent-soft)] px-1 text-[10px]">
+                            歌詞
+                          </span>
+                          <span className="truncate">{highlight(snippetFor(h) ?? '', q)}</span>
+                        </span>
+                      ) : null}
+                    </span>
                     {h.original_key ? (
-                      <span className="rounded bg-[var(--soft)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted-fg)]">
+                      <span className="shrink-0 rounded bg-[var(--soft)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--muted-fg)]">
                         {h.original_key}
                       </span>
                     ) : null}
