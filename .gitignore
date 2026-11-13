@@ -29,3 +29,6 @@ public/tesseract-core/
 
 # macOS
 .DS_Store
+
+# Wrangler local dev cache (miniflare state, never source)
+.wrangler/
