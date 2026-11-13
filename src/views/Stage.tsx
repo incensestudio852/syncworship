@@ -388,12 +388,12 @@ export default function StagePage() {
               }}
               className="rounded-full bg-[var(--soft)] px-2 py-0.5 text-[10px] text-[var(--fg)]"
             >
-              返回台上
+              返回 Live
             </button>
           ) : null}
           {isLive ? (
             <span className="flex items-center gap-1 rounded-full bg-[var(--gold)]/20 px-2 py-0.5 text-[10px] text-[var(--gold)]">
-              <Radio size={10} className="animate-pulse" /> 台上
+              <Radio size={10} className="animate-pulse" /> Live
             </span>
           ) : null}
           {fromCache ? (
