@@ -360,6 +360,12 @@ export default function ListEditorPage() {
         <SongSearch onPick={(s) => void addSong(s)} placeholder="搜尋並加入詩歌…" />
       </Card>
 
+      {items.length > 1 ? (
+        <p className="text-center text-[11px] text-[var(--muted-fg)]">
+          拖曳可排序；手機上點一下把手可前移，長按可後移。
+        </p>
+      ) : null}
+
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-12 text-center">
           <p className="text-sm font-medium">清單是空的</p>
@@ -471,12 +477,6 @@ export default function ListEditorPage() {
         })}
         </ol>
       )}
-
-      {items.length > 1 ? (
-        <p className="text-center text-[11px] text-[var(--muted-fg)]">
-          拖曳可排序；手機上點一下把手可前移，長按可後移。
-        </p>
-      ) : null}
 
       {/* footer actions */}
       <div className="space-y-3 pt-2">
