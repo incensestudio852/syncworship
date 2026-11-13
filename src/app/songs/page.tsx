@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Music4, Plus, X } from 'lucide-react';
 import { Button, Card, EmptyState, Spinner } from '@/components/ui';
@@ -14,6 +14,7 @@ export default function SongsPage() {
   const { hits, loading, error } = useSongSearch(q);
   const [recent, setRecent] = useState<Song[] | null>(null);
   const [sort, setSort] = useState<SortMode>('recent');
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const loadRecent = useCallback(async () => {
     const { data } = await supabase()
@@ -29,14 +30,32 @@ export default function SongsPage() {
   }, [loadRecent]);
 
   const searching = q.trim().length > 0;
-  const list = searching ? (hits as Song[]) : recent;
+  const base = searching ? (hits as Song[]) : recent;
+  // The tag filter applies on top of whichever list is showing, so a search
+  // plus a tag narrows rather than replaces.
+  const list = activeTag ? (base ?? []).filter((x) => (x.tags ?? []).includes(activeTag)) : base;
+
+  // Chips are derived from the loaded songs rather than fetched, so they appear
+  // in the same paint as the rows and can never lag behind them.
+  const tags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const song of recent ?? []) {
+      for (const t of song.tags ?? []) {
+        if (t) counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .map(([tag, n]) => ({ tag, n }))
+      .sort((a, b) => b.n - a.n || a.tag.localeCompare(b.tag))
+      .slice(0, 40);
+  }, [recent]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">詩歌庫</h1>
-          <p className="mt-0.5 text-sm text-[var(--muted-fg)]">搜尋、加入新詩歌與樂譜</p>
+          <p className="mt-0.5 text-sm text-[var(--muted-fg)]">以歌名或標籤搜尋詩歌、加入新樂譜</p>
         </div>
         <Link href="/songs/new/">
           <Button variant="primary">
@@ -50,9 +69,40 @@ export default function SongsPage() {
           onPick={(s) => {
             window.location.href = `/songs/detail/?id=${s.id}`;
           }}
-          placeholder="搜尋詩歌名稱（例：奇異恩典）"
+          placeholder="搜尋歌名或標籤（例：奇異恩典、聖餐）"
         />
       </div>
+
+      {tags.length ? (
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {activeTag ? (
+            <button
+              onClick={() => setActiveTag(null)}
+              className="flex min-h-[34px] shrink-0 items-center gap-1 rounded-full border border-[var(--accent)] px-3 text-xs text-[var(--accent)]"
+            >
+              <X size={11} /> 清除標籤
+            </button>
+          ) : null}
+          {tags.map((t) => {
+            const on = activeTag === t.tag;
+            return (
+              <button
+                key={t.tag}
+                onClick={() => setActiveTag(on ? null : t.tag)}
+                aria-pressed={on}
+                className={`flex min-h-[34px] shrink-0 items-center gap-1 rounded-full border px-3 text-xs transition-colors ${
+                  on
+                    ? 'border-[var(--accent)] bg-[var(--accent)] font-medium text-white'
+                    : 'border-[var(--border)] text-[var(--muted-fg)] hover:bg-[var(--soft)]'
+                }`}
+              >
+                {t.tag}
+                <span className={on ? 'text-white/70' : 'text-[var(--muted-fg)]/60'}>{t.n}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {!searching ? (
         <div className="flex items-center gap-1 text-xs">
@@ -89,7 +139,7 @@ export default function SongsPage() {
           <EmptyState
             icon={<X size={22} />}
             title={`找不到「${q.trim()}」`}
-            body="可以用部分名稱搜尋，或新增這首詩歌。"
+            body="可以用部分歌名或標籤搜尋，或新增這首詩歌。"
             action={
               <Link href={`/songs/new/?title=${encodeURIComponent(q.trim())}`}>
                 <Button variant="primary">

@@ -22,8 +22,8 @@ export const CFG = {
  */
 export const OCR_LANGUAGES = [
   { id: 'chi_tra', label: '繁中', tesseract: 'chi_tra', bytes: 1.6e6, default: true },
-  { id: 'chi_sim', label: '简中', tesseract: 'chi_sim', bytes: 1.6e6, default: true },
-  { id: 'eng', label: 'English', tesseract: 'eng', bytes: 2.8e6, default: true },
+  { id: 'chi_sim', label: '简中', tesseract: 'chi_sim', bytes: 1.6e6, default: false },
+  { id: 'eng', label: 'English', tesseract: 'eng', bytes: 2.8e6, default: false },
   { id: 'jpn', label: '日本語', tesseract: 'jpn', bytes: 1.9e6, default: false },
   { id: 'kor', label: '한국어', tesseract: 'kor', bytes: 1.5e6, default: false },
   { id: 'tha', label: 'ไทย', tesseract: 'tha', bytes: 0.9e6, default: false },
