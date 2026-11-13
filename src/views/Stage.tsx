@@ -35,6 +35,9 @@ import { getDeviceName, fallbackDeviceName } from '@/lib/deviceName';
 import { hasChords, relativeTime, sortItems } from '@/lib/chords';
 import { Button } from '@/components/ui';
 import { IncomingPushBanner } from '@/components/IncomingPushBanner';
+import { StageMetricsPill } from '@/components/StageMetricsPill';
+import { StageMetricsPanel } from '@/components/StageMetricsPanel';
+import { transposeKey, transposeLyrics } from '@/lib/transpose';
 
 type View = 'sheet' | 'lyrics';
 
@@ -51,6 +54,9 @@ export default function StagePage() {
   const [manual, setManual] = useState(false);
   const [view, setView] = useState<View>('sheet');
   const [showChords, setShowChords] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [metricsHidden, setMetricsHidden] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [showList, setShowList] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isWide, setIsWide] = useState(true);
@@ -209,6 +215,27 @@ export default function StagePage() {
   }, [items.length, index]);
 
   const current = items[index];
+
+  /**
+   * Key actually being sung.
+   *
+   * service_key is what the leader chose for this service; the offset is a
+   * per-device nudge on top of it, so a stage can drop a semitone without
+   * changing what anyone else sees.
+   */
+  const serviceKey = current?.service_key ?? current?.songs?.original_key ?? '';
+  const sungKey = serviceKey ? transposeKey(serviceKey, offset) : '';
+  const displayLyrics = useMemo(() => {
+    const raw = current?.songs?.lyrics ?? '';
+    if (!offset) return raw;
+    return transposeLyrics(raw, offset, sungKey);
+  }, [current?.songs?.lyrics, offset, sungKey]);
+
+  // A new song starts from its own key, not the previous song's transpose.
+  useEffect(() => {
+    setOffset(0);
+  }, [current?.id]);
+
   const isLive = Boolean(liveSongId && current?.song_id === liveSongId);
 
   // ---------------- current song sheets ----------------
@@ -316,6 +343,18 @@ export default function StagePage() {
         />
       ) : null}
 
+        {detailsOpen && current ? (
+          <div className="absolute inset-x-0 bottom-0 z-40 sm:hidden">
+            <StageMetricsPanel
+              item={current}
+              sungKey={sungKey}
+              offset={offset}
+              onClose={() => setDetailsOpen(false)}
+              variant="sheet"
+            />
+          </div>
+        ) : null}
+
       {/* status strip */}
       <div
         className={`flex h-8 shrink-0 items-center gap-2 px-3 text-[11px] ${
@@ -368,8 +407,9 @@ export default function StagePage() {
         </div>
       </div>
 
-      {/* main */}
-      <div className="relative flex min-h-0 flex-1">
+      {/* main — the right padding reserves the metrics rail on tablet+, so the
+          sheet stays centred in the space that is actually visible. */}
+      <div className={`relative flex min-h-0 flex-1 ${!showList ? 'sm:pr-64 lg:pr-72' : ''}`}>
         {plan === 'sheet' ? (
           <SheetViewer
             urls={urls}
@@ -385,7 +425,7 @@ export default function StagePage() {
                 {current?.songs?.title ?? '—'}
               </h1>
               <ChordLyrics
-                lyrics={current?.songs?.lyrics}
+                lyrics={displayLyrics}
                 showChords={showChords}
                 className={isWide ? 'text-[19px]' : 'text-[17px]'}
               />
@@ -395,6 +435,42 @@ export default function StagePage() {
 
         {/* Sits low-right, clear of the sheet's page arrows which are vertically
             centred — at top-1/2 the two were easy to hit by mistake. */}
+        {/* Tablet and up: metrics live in a rail, expanded by default, because
+            there is room and a leader wants them at a glance. Phones use the
+            floating pill instead. */}
+        {!showList ? (
+          <aside className="absolute inset-y-0 right-0 z-10 hidden w-64 flex-col border-l border-[var(--border)] bg-[var(--card)]/95 backdrop-blur sm:flex lg:w-72">
+            <div className="flex items-center gap-1 border-b border-[var(--border)] py-1 pl-3 pr-1.5 text-xs font-medium">
+              <span className="flex-1 truncate">{current?.songs?.title ?? '—'}</span>
+              {current ? (
+                <Link
+                  href={`/lists/?id=${listId}`}
+                  aria-label="編輯敬拜清單"
+                  className="grid h-9 w-9 place-items-center rounded-lg text-[var(--muted-fg)] hover:bg-[var(--soft)]"
+                >
+                  <Pencil size={14} />
+                </Link>
+              ) : null}
+            </div>
+            {current ? (
+              <StageMetricsPanel item={current} sungKey={sungKey} offset={offset} variant="rail" />
+            ) : null}
+          </aside>
+        ) : null}
+
+        {/* Compact metrics float above the toggle so the sheet keeps the whole
+            screen; the full panel is one tap away. */}
+        {current ? (
+          <StageMetricsPill
+            item={current}
+            transposedKey={sungKey}
+            offset={offset}
+            hidden={metricsHidden}
+            onToggleHidden={() => setMetricsHidden((v) => !v)}
+            onOpenDetails={() => setDetailsOpen(true)}
+          />
+        ) : null}
+
         <button
           onClick={() => setShowList((v) => !v)}
           className="absolute bottom-28 right-0 z-20 grid min-h-[44px] w-9 place-items-center rounded-l-xl border border-r-0 border-[var(--border)] bg-[var(--card)]/95 text-[var(--muted-fg)] shadow-sm backdrop-blur sm:bottom-32"
@@ -528,6 +604,32 @@ export default function StagePage() {
           >
             {plan === 'sheet' ? <FileText size={16} /> : <FileImage size={16} />}
           </Button>
+        ) : null}
+
+        {plan === 'lyrics' && sungKey ? (
+          <div className="flex items-center rounded-lg border border-[var(--border)]">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="!min-h-[32px] !px-1.5"
+              onClick={() => setOffset((v) => v - 1)}
+              aria-label="降半音"
+            >
+              −
+            </Button>
+            <span className="min-w-10 text-center font-mono text-[11px] text-[var(--muted-fg)]">
+              {offset > 0 ? `+${offset}` : offset}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="!min-h-[32px] !px-1.5"
+              onClick={() => setOffset((v) => v + 1)}
+              aria-label="升半音"
+            >
+              +
+            </Button>
+          </div>
         ) : null}
 
         {chordKey && plan === 'lyrics' ? (
