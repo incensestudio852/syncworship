@@ -1,6 +1,5 @@
 'use client';
 
-import { ArrowDown } from 'lucide-react';
 import type { ListItem } from '@/lib/supabase';
 import { dynamicBand, keyLabel } from '@/lib/setlist';
 
@@ -84,8 +83,8 @@ export function StageMetricsPill({
 
           {/* one section per line: name, then its dynamic, arrow to the next */}
           <span className="max-h-[88px] w-full overflow-y-auto">
-          {rows.map((r, i) => (
-            <span key={i} className="flex w-full items-center gap-1 leading-tight">
+          {rows.map((r) => (
+            <span key={r.label + r.dynamic} className="flex w-full items-center gap-1 leading-tight">
               <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--muted-fg)]">
                 {r.label}
               </span>
@@ -93,9 +92,6 @@ export function StageMetricsPill({
                 <span className={`shrink-0 font-mono text-[10px] ${r.band.text}`}>
                   {r.dynamic}
                 </span>
-              ) : null}
-              {i < rows.length - 1 ? (
-                <ArrowDown size={9} className="shrink-0 text-[var(--muted-fg)]/50" />
               ) : null}
             </span>
           ))}
