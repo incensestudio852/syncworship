@@ -89,7 +89,7 @@ export function StageMetricsPill({
           ) : null}
 
           {/* one section per line: name, then its dynamic, arrow to the next */}
-          <span className="max-h-[88px] w-full overflow-y-auto">
+          <span className="max-h-[101px] w-full overflow-y-auto">
           {rows.map((r) => (
             <span key={r.label + r.dynamic} className="flex w-full items-center gap-1 leading-tight">
               <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--muted-fg)]">
