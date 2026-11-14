@@ -315,15 +315,12 @@ export default function StagePage() {
    * Two rules, in order:
    *  1. No sheet images at all -> lyrics. Forcing the sheet view left people on
    *     "此詩歌沒有樂譜影像" with no obvious way out.
-   *  2. Otherwise pick a sensible STARTING view once the song loads, then let
-   *     the user's toggle win.
-   *
-   * A `lead_sheet` (staff/tab score) opens on the IMAGE, because OCR'd lyrics
-   * from a score are a rough reference at best. Everything else opens on the
-   * lyrics the team actually typed, which is what they read on stage.
+   *  2. Otherwise open on the sheet image, then let the user's toggle win.
    */
-  const preferred: View =
-    current?.songs?.sheet_kind === 'lead_sheet' && hasSheet ? 'sheet' : 'lyrics';
+  // The stage opens on the SHEET image by default: it is the authoritative
+  // source (chords, layout, dynamics markings) and what players read from.
+  // Lyrics remain one tap away, and songs with no sheet fall back to them.
+  const preferred: View = 'sheet';
   const plan: View = sheetsLoading ? view : !hasSheet ? 'lyrics' : viewChosen ? view : preferred;
 
   // Preload neighbours so a push never waits on the network.
@@ -667,9 +664,9 @@ export default function StagePage() {
       </div>
 
       {/* bottom bar */}
-      <div className="flex h-14 shrink-0 items-center gap-0.5 border-t border-[var(--border)] px-1.5 pb-[env(safe-area-inset-bottom)] [height:calc(3.5rem+env(safe-area-inset-bottom))]">
+      <div className="flex shrink-0 items-center gap-0.5 border-t border-[var(--border)] px-1.5 pb-[env(safe-area-inset-bottom)] [height:calc(3.85rem+env(safe-area-inset-bottom))]">
         <Button variant="ghost" size="sm" onClick={() => go(-1)} disabled={index <= 0} aria-label="上一首">
-          <ChevronLeft size={17} />
+          <ChevronLeft size={22} />
         </Button>
 
         <div className="min-w-0 flex-1 text-center leading-tight">
@@ -693,7 +690,7 @@ export default function StagePage() {
           disabled={index >= items.length - 1}
           aria-label="下一首"
         >
-          <ChevronRight size={17} />
+          <ChevronRight size={22} />
         </Button>
 
         <div className="mx-0.5 h-6 w-px bg-[var(--border)]" />

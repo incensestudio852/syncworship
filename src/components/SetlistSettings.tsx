@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowUp, ChevronDown, Plus, Trash2, X } from 'lucide-react';
 import type { FlowStep, ListItem } from '@/lib/supabase';
 import {
@@ -38,39 +38,64 @@ export function SetlistRowSettings({
   const originalKey = item.songs?.original_key ?? '';
   const serviceKey = item.service_key ?? '';
   const tempo = item.tempo ?? item.songs?.tempo ?? null;
-  const flow = item.flow ?? [];
-
-  const setFlow = (next: FlowStep[]) => onChange({ flow: next });
 
   /**
-   * Add a section to the flow.
+   * Flow lives in LOCAL state, not straight off the prop.
    *
-   * Tapping the same chip twice in a row means "sing it twice in a row", so it
-   * bumps that row's count (C -> Cx2) instead of adding an identical twin. Two
-   * identical rows read as a duplication bug and clutter the stage pill; a count
-   * says the same thing in one line.
-   *
-   * A repeat that is NOT adjacent (C ... C) stays a separate row, because the
-   * passes are separated by other sections and may carry their own dynamic.
+   * `onChange` is debounced (~450ms) before it reaches the database and back
+   * down as a new `item`. Reading `item.flow` meant two quick taps of +V1 both
+   * built from the same stale array, so the second overwrote the first and the
+   * list appeared not to change. Local state applies each tap immediately; the
+   * effect below re-syncs if the row is changed elsewhere (realtime, another
+   * tab).
    */
-  const addRow = (section: string) => {
-    const last = flow[flow.length - 1];
-    if (last && last.section === section) {
-      patchRow(flow.length - 1, { count: (last.count ?? 1) + 1 });
-      return;
-    }
-    setFlow([...flow, { section, count: 1, dynamic: '', remark: '' }]);
-  };
+  /**
+   * Counts are legacy. Earlier builds collapsed repeats into `count: 2` with no
+   * way to edit or remove the extra pass, so on load each count is expanded into
+   * real rows — one row per pass. The first keeps the dynamics; the copies start
+   * blank so they can be set individually.
+   */
+  const expandCounts = (steps: FlowStep[]): FlowStep[] =>
+    steps.flatMap((st) => {
+      const n = Math.max(1, st.count ?? 1);
+      return Array.from({ length: n }, (_, k) => ({
+        ...st,
+        count: 1,
+        dynamic: k === 0 ? st.dynamic : '',
+        remark: k === 0 ? st.remark : '',
+      }));
+    });
 
-  /** Clamp the repeat count; a row always plays at least once. */
-  const setCount = (i: number, next: number) =>
-    patchRow(i, { count: Math.min(9, Math.max(1, next)) });
+  const [flow, setFlowLocal] = useState<FlowStep[]>(() =>
+    expandCounts(item.flow ?? []),
+  );
+  const flowKey = JSON.stringify(item.flow ?? []);
+  useEffect(() => {
+    setFlowLocal(expandCounts(item.flow ?? []));
+    // Only when the persisted value actually changes, not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flowKey]);
+
+  const setFlow = (next: FlowStep[]) => {
+    setFlowLocal(next);
+    onChange({ flow: next });
+  };
 
   const patchRow = (i: number, patch: Partial<FlowStep>) => {
     const next = [...flow];
     next[i] = { ...next[i], ...patch };
     setFlow(next);
   };
+
+  /**
+   * Add a section. One tap, one row.
+   *
+   * Repeating a section is expressed by tapping again, which adds another row
+   * in the order sung — the flow is a table of passes, and each pass can carry
+   * its own dynamic and remark.
+   */
+  const addRow = (section: string) =>
+    setFlow([...flow, { section, count: 1, dynamic: '', remark: '' }]);
 
   const moveRow = (i: number, delta: number) => {
     const j = i + delta;
@@ -81,7 +106,7 @@ export function SetlistRowSettings({
   };
 
   const summary = flow
-    .map((s) => (s.count && s.count > 1 ? `${s.section}x${s.count}` : s.section))
+    .map((s) => s.section)
     .join(' → ');
 
   return (
@@ -195,16 +220,6 @@ export function SetlistRowSettings({
                         aria-label="段落名稱"
                         className="h-7 w-[74px] shrink-0 rounded-md border border-[var(--border)] bg-[var(--card)] px-1 text-center font-mono text-[11px] outline-none focus:border-[var(--accent)]"
                       />
-
-                      {/* Repeat count: "sing this section N times in a row". */}
-                      <button
-                        onClick={() => setCount(i, (step.count ?? 1) + 1)}
-                        aria-label={`${step.section} 加一次`}
-                        title="同一段多唱一次"
-                        className="h-7 shrink-0 rounded-md border border-[var(--border)] bg-[var(--card)] px-1 font-mono text-[10px] text-[var(--muted-fg)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                      >
-                        ×{step.count ?? 1}
-                      </button>
 
                       <input
                         value={step.dynamic ?? ''}
