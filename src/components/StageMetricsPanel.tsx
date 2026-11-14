@@ -81,14 +81,16 @@ export function StageMetricsPanel({
       {/* flow + per-section remarks */}
       {rows.length ? (
         <div className="mt-2.5">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--muted-fg)]">
+          <p className="text-[13px] font-medium uppercase tracking-wide text-[var(--muted-fg)]">
             段落流程
           </p>
-          <ul className="mt-1 space-y-0.5">
+          {/* Expanded for reading, not glancing: 30% larger than the collapsed
+              pill, and the section column widened so longer labels still fit. */}
+          <ul className="mt-1 space-y-1">
             {rows.map((r) => (
-              <li key={`${r.key}-${r.i}`} className="flex items-start gap-1.5 text-[11px]">
-                <span className="w-11 shrink-0 font-mono text-[var(--muted-fg)]">{r.key}</span>
-                <span className={`w-7 shrink-0 text-center font-mono ${r.band.text}`}>
+              <li key={`${r.key}-${r.i}`} className="flex items-start gap-1.5 text-[14px] leading-snug">
+                <span className="w-16 shrink-0 font-mono text-[var(--muted-fg)]">{r.key}</span>
+                <span className={`w-8 shrink-0 text-center font-mono ${r.band.text}`}>
                   {r.dynamic}
                 </span>
                 <span className="min-w-0 flex-1 text-[var(--fg)]">{r.note}</span>
