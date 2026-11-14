@@ -33,7 +33,6 @@ import { DEFAULT_OCR_LANGS, type OcrLangId } from '@/config';
 import { convertChartToInline } from '@/lib/chartToInline';
 import { parseFilename } from '@/lib/parseFilename';
 import { stripPunctuation } from '@/lib/stripPunctuation';
-import { repairCjkOcr } from '@/lib/repairCjkOcr';
 import { uploadSheetPages } from '@/lib/storage';
 
 type ReadyPage = { blob: Blob; url: string; page: number };
@@ -177,18 +176,27 @@ function NewSongForm() {
     if (guessed.size) setHighlight((prev) => new Set([...prev, ...guessed]));
 
     const converted = convertChartToInline(raw);
-    // Repair 祢-family glyphs before punctuation stripping: 禰/襧 have no other
-    // meaning in a lyric, and the fix must survive into the stored text.
-    const cleaned = stripPunctuation(repairCjkOcr(converted.lyrics));
-    lyricsRef.current = cleaned;
-    setLyrics(cleaned);
     setChordCount(converted.chordsFound);
     setSheetKind(converted.kind);
+
+    /**
+     * A staff/tab score has no usable text: OCR reads noteheads, lyric dots and
+     * chord symbols as characters, producing lines like 「區發話和二一一瑟汪」.
+     * Putting that in the lyrics field is worse than leaving it empty — it looks
+     * like real content on stage and has to be deleted by hand. So for a
+     * lead_sheet we keep the user's own text and say so.
+     */
+    if (converted.kind === 'lead_sheet') {
+      setOcrUnconfirmed(false);
+      toast('此為五線譜／簡譜，未能可靠辨識歌詞，請自行輸入；樂譜影像仍會顯示。', 'info');
+      return;
+    }
+
+    const cleaned = stripPunctuation(converted.lyrics);
+    lyricsRef.current = cleaned;
+    setLyrics(cleaned);
     setOcrUnconfirmed(true);
     flag('lyrics');
-    if (converted.kind === 'lead_sheet') {
-      toast('此為五線譜／簡譜樂譜，只匯入歌詞；和弦請人手標註。', 'info');
-    }
   }, []);
 
   /**
