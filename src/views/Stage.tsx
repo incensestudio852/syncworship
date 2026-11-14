@@ -55,6 +55,8 @@ export default function StagePage() {
   const [index, setIndex] = useState(0);
   const [manual, setManual] = useState(false);
   const [view, setView] = useState<View>('sheet');
+  /** True once the user taps the lyrics/sheet toggle for the current song. */
+  const [viewChosen, setViewChosen] = useState(false);
   const [showChords, setShowChords] = useState(true);
   const [offset, setOffset] = useState(0);
   const [metricsHidden, setMetricsHidden] = useState(false);
@@ -289,9 +291,12 @@ export default function StagePage() {
     return transposeLyrics(raw, offset, sungKey);
   }, [current?.songs?.lyrics, offset, sungKey]);
 
-  // A new song starts from its own key, not the previous song's transpose.
+  // A new song starts from its own key, not the previous song's transpose, and
+  // on its preferred pane rather than whatever the last song was showing.
   useEffect(() => {
     setOffset(0);
+    setView('sheet');
+    setViewChosen(false);
   }, [current?.id]);
 
   const isLive = Boolean(liveSongId && current?.song_id === liveSongId);
@@ -304,11 +309,22 @@ export default function StagePage() {
     [sheets, urls],
   );
   const hasSheet = pagePaths.length > 0;
-  // Default view: a lead/piano score opens on the SHEET, because the image is
-  // the authoritative source and OCR lyrics are only a rough reference.
-  // A lyric-only song has no sheet, so it falls through to lyrics.
-  const isLeadSheet = current?.songs?.sheet_kind === 'lead_sheet';
-  const plan: View = !sheetsLoading && !hasSheet ? 'lyrics' : isLeadSheet ? 'sheet' : view;
+  /**
+   * Which pane to show.
+   *
+   * Two rules, in order:
+   *  1. No sheet images at all -> lyrics. Forcing the sheet view left people on
+   *     "此詩歌沒有樂譜影像" with no obvious way out.
+   *  2. Otherwise pick a sensible STARTING view once the song loads, then let
+   *     the user's toggle win.
+   *
+   * A `lead_sheet` (staff/tab score) opens on the IMAGE, because OCR'd lyrics
+   * from a score are a rough reference at best. Everything else opens on the
+   * lyrics the team actually typed, which is what they read on stage.
+   */
+  const preferred: View =
+    current?.songs?.sheet_kind === 'lead_sheet' && hasSheet ? 'sheet' : 'lyrics';
+  const plan: View = sheetsLoading ? view : !hasSheet ? 'lyrics' : viewChosen ? view : preferred;
 
   // Preload neighbours so a push never waits on the network.
   useEffect(() => {
@@ -687,7 +703,11 @@ export default function StagePage() {
             variant="ghost"
             size="sm"
             className="!px-2"
-            onClick={() => setView(plan === 'sheet' ? 'lyrics' : 'sheet')}
+            onClick={() => {
+              // Record the choice so the per-song default stops overriding it.
+              setViewChosen(true);
+              setView(plan === 'sheet' ? 'lyrics' : 'sheet');
+            }}
             aria-label={plan === 'sheet' ? '顯示歌詞' : '顯示樂譜'}
           >
             {plan === 'sheet' ? <FileText size={16} /> : <FileImage size={16} />}
