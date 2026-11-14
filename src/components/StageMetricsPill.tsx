@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import type { ListItem } from '@/lib/supabase';
 import { dynamicBand, keyLabel, transitionLabel } from '@/lib/setlist';
 
@@ -49,6 +50,40 @@ export function StageMetricsPill({
     band: dynamicBand(step.dynamic),
   }));
 
+  /**
+   * Is the flow list taller than the space allowed for it?
+   *
+   * The pill is capped so it never covers the sheet, which means a long flow
+   * gets silently clipped. Measuring the real content tells us whether to show
+   * the "more below" affordances at all — a gradient over a short list would be
+   * a permanent lie.
+   */
+  const scrollRef = useRef<HTMLSpanElement | null>(null);
+  const [overflowing, setOverflowing] = useState(false);
+  /** How many rows fit in the capped height — lets us say "5 / 11". */
+  const [visible, setVisible] = useState(rows.length);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const measure = () => {
+      const more = el.scrollHeight - el.clientHeight > 2;
+      setOverflowing(more);
+      if (!more) {
+        setVisible(rows.length);
+        return;
+      }
+      // Row height is uniform, so one known row height gives the count.
+      const first = el.querySelector('span');
+      const rowH = first ? first.getBoundingClientRect().height : 0;
+      setVisible(rowH > 0 ? Math.max(1, Math.floor(el.clientHeight / rowH)) : rows.length);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [rows.length]);
+
   if (hidden) {
     return (
       <button
@@ -88,8 +123,32 @@ export function StageMetricsPill({
             </span>
           ) : null}
 
-          {/* one section per line: name, then its dynamic, arrow to the next */}
-          <span className="max-h-[101px] w-full overflow-y-auto">
+          {/* Flow list, capped so the pill stays compact. When it overflows the
+              label carries an "x / y" count and the list fades at its bottom
+              edge, so a clipped flow reads as "there is more" rather than as the
+              whole song. */}
+          {overflowing ? (
+            <span className="flex w-full items-center justify-between leading-none">
+              <span className="text-[9px] uppercase tracking-wide text-[var(--muted-fg)]">段落</span>
+              <span className="font-mono text-[9px] text-[var(--muted-fg)]">
+                {visible} / {rows.length}
+              </span>
+            </span>
+          ) : null}
+          <span className="relative flex w-full flex-col">
+            <span
+              ref={scrollRef}
+              className="max-h-[101px] w-full flex-col overflow-y-auto"
+              style={{
+                // Bottom fade: a soft hint that rows continue past the cap.
+                maskImage: overflowing
+                  ? 'linear-gradient(to bottom, #000 calc(100% - 28px), transparent 100%)'
+                  : undefined,
+                WebkitMaskImage: overflowing
+                  ? 'linear-gradient(to bottom, #000 calc(100% - 28px), transparent 100%)'
+                  : undefined,
+              }}
+            >
           {rows.map((r) => (
             <span key={r.label + r.dynamic} className="flex w-full items-center gap-1 leading-tight">
               <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--muted-fg)]">
@@ -102,6 +161,7 @@ export function StageMetricsPill({
               ) : null}
             </span>
           ))}
+            </span>
           </span>
 
           {transition ? (
