@@ -43,12 +43,28 @@ export function SetlistRowSettings({
   const setFlow = (next: FlowStep[]) => onChange({ flow: next });
 
   /**
-   * Append a row. Repeating a section adds a NEW row rather than bumping a
-   * count, because each pass carries its own dynamic and remark — that is the
-   * whole reason the sheet is a table.
+   * Add a section to the flow.
+   *
+   * Tapping the same chip twice in a row means "sing it twice in a row", so it
+   * bumps that row's count (C -> Cx2) instead of adding an identical twin. Two
+   * identical rows read as a duplication bug and clutter the stage pill; a count
+   * says the same thing in one line.
+   *
+   * A repeat that is NOT adjacent (C ... C) stays a separate row, because the
+   * passes are separated by other sections and may carry their own dynamic.
    */
-  const addRow = (section: string) =>
+  const addRow = (section: string) => {
+    const last = flow[flow.length - 1];
+    if (last && last.section === section) {
+      patchRow(flow.length - 1, { count: (last.count ?? 1) + 1 });
+      return;
+    }
     setFlow([...flow, { section, count: 1, dynamic: '', remark: '' }]);
+  };
+
+  /** Clamp the repeat count; a row always plays at least once. */
+  const setCount = (i: number, next: number) =>
+    patchRow(i, { count: Math.min(9, Math.max(1, next)) });
 
   const patchRow = (i: number, patch: Partial<FlowStep>) => {
     const next = [...flow];
@@ -179,6 +195,16 @@ export function SetlistRowSettings({
                         aria-label="段落名稱"
                         className="h-7 w-[74px] shrink-0 rounded-md border border-[var(--border)] bg-[var(--card)] px-1 text-center font-mono text-[11px] outline-none focus:border-[var(--accent)]"
                       />
+
+                      {/* Repeat count: "sing this section N times in a row". */}
+                      <button
+                        onClick={() => setCount(i, (step.count ?? 1) + 1)}
+                        aria-label={`${step.section} 加一次`}
+                        title="同一段多唱一次"
+                        className="h-7 shrink-0 rounded-md border border-[var(--border)] bg-[var(--card)] px-1 font-mono text-[10px] text-[var(--muted-fg)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      >
+                        ×{step.count ?? 1}
+                      </button>
 
                       <input
                         value={step.dynamic ?? ''}
