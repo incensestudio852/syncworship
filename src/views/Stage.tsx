@@ -284,6 +284,14 @@ export default function StagePage() {
    * changing what anyone else sees.
    */
   const serviceKey = current?.service_key ?? current?.songs?.original_key ?? '';
+  /**
+   * The key of THIS SERVICE — what the user set in the list.
+   *
+   * Falls back to the library's original key for songs that were never given a
+   * service key. The transpose offset is shown separately (`→ C#`), so this
+   * value stays the one the user typed rather than drifting with auto-transpose.
+   */
+  const songKey = current?.selected_key || current?.songs?.original_key || '';
   const sungKey = serviceKey ? transposeKey(serviceKey, offset) : '';
   const displayLyrics = useMemo(() => {
     const raw = current?.songs?.lyrics ?? '';
@@ -499,9 +507,19 @@ export default function StagePage() {
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-10">
             <div className="mx-auto max-w-3xl">
-              <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
-                {current?.songs?.title ?? '—'}
-              </h1>
+              <div className="mb-4 flex items-baseline gap-2.5">
+                <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+                  {current?.songs?.title ?? '—'}
+                </h1>
+                {songKey ? (
+                  <span className="shrink-0 rounded-md bg-[var(--soft)] px-2 py-0.5 font-mono text-sm font-semibold text-[var(--accent)]">
+                    {songKey}
+                  </span>
+                ) : null}
+                {sungKey && offset !== 0 ? (
+                  <span className="shrink-0 font-mono text-sm text-[var(--gold)]">→ {sungKey}</span>
+                ) : null}
+              </div>
               <ChordLyrics
                 lyrics={displayLyrics}
                 showChords={showChords}
@@ -562,8 +580,7 @@ export default function StagePage() {
         {current ? (
           <StageMetricsPill
             item={current}
-            transposedKey={sungKey}
-            offset={offset}
+            songKey={current.selected_key || current.songs?.original_key || ''}
             hidden={metricsHidden}
             onToggleHidden={() => setMetricsHidden((v) => !v)}
             onOpenDetails={() => setDetailsOpen(true)}
@@ -670,12 +687,19 @@ export default function StagePage() {
         </Button>
 
         <div className="min-w-0 flex-1 text-center leading-tight">
-          <p className="truncate text-sm font-medium">{current?.songs?.title ?? '清單沒有詩歌'}</p>
+          {/* Title with the song's key beside it: the key is what a player checks
+              most often, and hiding it in the second line made people open the
+              metrics panel just to read it. */}
+          <p className="flex items-center justify-center gap-1.5 truncate text-sm font-medium">
+            <span className="truncate">{current?.songs?.title ?? '清單沒有詩歌'}</span>
+            {songKey ? (
+              <span className="shrink-0 rounded bg-[var(--soft)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--accent)]">
+                {songKey}
+              </span>
+            ) : null}
+          </p>
           <p className="truncate text-[10px] text-[var(--muted-fg)]">
             {items.length ? `${index + 1} / ${items.length}` : ''}
-            {current?.songs?.original_key
-              ? ` · ${current.selected_key || current.songs.original_key}`
-              : ''}
             {plan === 'sheet' && pageInfo.total > 1
               ? ` · 第 ${pageInfo.index + 1}/${pageInfo.total} 頁`
               : ''}
