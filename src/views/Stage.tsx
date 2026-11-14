@@ -664,9 +664,9 @@ export default function StagePage() {
       </div>
 
       {/* bottom bar */}
-      <div className="flex shrink-0 items-center gap-0.5 border-t border-[var(--border)] px-1.5 pb-[env(safe-area-inset-bottom)] [height:calc(3.85rem+env(safe-area-inset-bottom))]">
+      <div className="flex shrink-0 items-center gap-0.5 border-t border-[var(--border)] px-1.5 pb-[env(safe-area-inset-bottom)] [height:calc(3.66rem+env(safe-area-inset-bottom))]">
         <Button variant="ghost" size="sm" onClick={() => go(-1)} disabled={index <= 0} aria-label="上一首">
-          <ChevronLeft size={22} />
+          <ChevronLeft size={26} />
         </Button>
 
         <div className="min-w-0 flex-1 text-center leading-tight">
@@ -690,7 +690,7 @@ export default function StagePage() {
           disabled={index >= items.length - 1}
           aria-label="下一首"
         >
-          <ChevronRight size={22} />
+          <ChevronRight size={26} />
         </Button>
 
         <div className="mx-0.5 h-6 w-px bg-[var(--border)]" />
