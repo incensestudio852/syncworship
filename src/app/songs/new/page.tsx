@@ -33,6 +33,7 @@ import { DEFAULT_OCR_LANGS, type OcrLangId } from '@/config';
 import { convertChartToInline } from '@/lib/chartToInline';
 import { parseFilename } from '@/lib/parseFilename';
 import { stripPunctuation } from '@/lib/stripPunctuation';
+import { repairCjkOcr } from '@/lib/repairCjkOcr';
 import { uploadSheetPages } from '@/lib/storage';
 
 type ReadyPage = { blob: Blob; url: string; page: number };
@@ -192,7 +193,9 @@ function NewSongForm() {
       return;
     }
 
-    const cleaned = stripPunctuation(converted.lyrics);
+    // Repair 祢-family glyphs (祁 -> 祢 etc.) before punctuation stripping, so
+    // the stored lyrics are already right.
+    const cleaned = stripPunctuation(repairCjkOcr(converted.lyrics));
     lyricsRef.current = cleaned;
     setLyrics(cleaned);
     setOcrUnconfirmed(true);
