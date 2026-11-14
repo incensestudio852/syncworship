@@ -14,17 +14,15 @@ import { dynamicBand, keyLabel, transitionLabel } from '@/lib/setlist';
  */
 export function StageMetricsPill({
   item,
-  transposedKey,
-  offset,
+  songKey,
   hidden,
   onToggleHidden,
   onOpenDetails,
   pushedDown,
 }: {
   item: ListItem;
-  /** Key actually being sung (service key, shifted by the transpose offset). */
-  transposedKey: string;
-  offset: number;
+  /** Service key from the setlist — what this song is played in. */
+  songKey: string;
   hidden: boolean;
   onToggleHidden: () => void;
   onOpenDetails: () => void;
@@ -106,15 +104,14 @@ export function StageMetricsPill({
           className="flex min-w-0 flex-1 flex-col items-start gap-[3px] text-left"
           aria-label="開啟歌曲詳情"
         >
+          {/* The service key the user set in the list, and nothing else.
+              Playback transpose (lyrics view) does not change what this song IS,
+              and showing the shifted key here made the pill disagree with the
+              setlist. The sung key lives in the lyrics view instead. */}
           <span className="flex items-baseline gap-1">
             <span className="font-mono text-[12px] font-semibold text-[var(--fg)]">
-              {keyLabel(transposedKey) || '—'}
+              {keyLabel(songKey) || '—'}
             </span>
-            {offset !== 0 ? (
-              <span className="font-mono text-[10px] text-[var(--gold)]">
-                {offset > 0 ? `+${offset}` : offset}
-              </span>
-            ) : null}
           </span>
 
           {tempo ? (
