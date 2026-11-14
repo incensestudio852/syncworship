@@ -58,12 +58,46 @@ export function transposeKey(key: string, semitones: number): string {
  * Transpose every chord inside brackets, leaving lyrics alone.
  * Unknown tokens (N.C., percussion marks) pass through unchanged.
  */
+/**
+ * A bracket is a CHORD only when its whole contents look like one.
+ *
+ * Section markers share the same syntax — `[Chorus]`, `[Verse]`, `[Bridge]` —
+ * and `Chorus` parses as root C + quality "horus", so a naive match transposed
+ * it to `[C#horus]`. Chords are therefore constrained to a known shape: a root,
+ * an optional short quality/extension, an optional slash bass.
+ */
+const CHORD_SHAPE =
+  /^([A-G][#b]?)(maj|min|m|M|dim|aug|sus|add|°|ø|\+|\-|\d{1,2}|[#b]\d{1,2}|\/)*([A-G][#b]?)?$/;
+
+/** Quality suffixes that actually occur in charts. */
+const QUALITY = /^(?:maj|min|m|M|dim|aug|sus|add|°|ø|\+|-|\d|#|b|\/)*$/;
+
+function looksLikeChord(token: string): boolean {
+  if (!token || token.length > 12) return false;
+  const m = token.match(/^([A-G][#b]?)(.*)$/);
+  if (!m) return false;
+  const [, root, restRaw] = m;
+  if (!(root in PITCH)) return false;
+
+  // Split off a slash bass first: "[D/F#]" -> quality "", bass "F#".
+  const slash = restRaw.lastIndexOf('/');
+  const rest = slash === -1 ? restRaw : restRaw.slice(0, slash);
+  if (slash !== -1) {
+    const bass = restRaw.slice(slash + 1);
+    if (!(bass in PITCH)) return false;
+  }
+  // "horus", "ridge", "erse 2" — a section name in disguise.
+  return QUALITY.test(rest);
+}
+
 export function transposeLyrics(lyrics: string, semitones: number, targetKey = ''): string {
   if (!semitones || !lyrics) return lyrics;
   const flats = prefersFlats(targetKey, lyrics);
 
   return lyrics.replace(/\[([^\]]+)\]/g, (whole, chord: string) => {
     const token = chord.trim();
+    // Section markers ([Chorus], [Verse], [Bridge]) must survive untouched.
+    if (!looksLikeChord(token)) return whole;
     // root, optional quality/extension, optional /bass
     const m = token.match(/^([A-G][#b]?)([^/]*)(?:\/([A-G][#b]?))?$/);
     if (!m) return whole;
