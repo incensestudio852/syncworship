@@ -395,7 +395,7 @@ export default function SongDetailPage() {
             </div>
           </div>
           <div>
-            <Label>歌詞（可含和弦 [G]）</Label>
+            <Label>歌詞（可含和弦 [G]　段落 [Verse] 標籤）</Label>
             <textarea
               value={form.lyrics ?? ''}
               onChange={(e) => setForm({ ...form, lyrics: e.target.value })}

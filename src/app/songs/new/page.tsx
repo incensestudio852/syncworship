@@ -33,6 +33,7 @@ import { DEFAULT_OCR_LANGS, type OcrLangId } from '@/config';
 import { convertChartToInline } from '@/lib/chartToInline';
 import { parseFilename } from '@/lib/parseFilename';
 import { stripPunctuation } from '@/lib/stripPunctuation';
+import { repairCjkOcr } from '@/lib/repairCjkOcr';
 import { uploadSheetPages } from '@/lib/storage';
 
 type ReadyPage = { blob: Blob; url: string; page: number };
@@ -176,7 +177,9 @@ function NewSongForm() {
     if (guessed.size) setHighlight((prev) => new Set([...prev, ...guessed]));
 
     const converted = convertChartToInline(raw);
-    const cleaned = stripPunctuation(converted.lyrics);
+    // Repair 祢-family glyphs before punctuation stripping: 禰/襧 have no other
+    // meaning in a lyric, and the fix must survive into the stored text.
+    const cleaned = stripPunctuation(repairCjkOcr(converted.lyrics));
     lyricsRef.current = cleaned;
     setLyrics(cleaned);
     setChordCount(converted.chordsFound);
@@ -725,7 +728,7 @@ function NewSongForm() {
       <Card className="space-y-3.5 p-4">
         <div>
           <Label>
-            歌詞（可含和弦）
+            歌詞（可含和弦 [G]　段落 [Verse] 標籤）
           </Label>
           <textarea
             value={lyrics}
