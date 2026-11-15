@@ -4,26 +4,32 @@ import { useEffect, useState } from 'react';
 import { Check, Copy, Link2, Loader2, Share2, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
+import { renderShareCard, cardUrl, type CardData } from '@/lib/shareCard';
 
 /**
  * Create / copy / revoke a list's share link.
  *
- * The link itself is login-walled — opening it still asks for the team account.
- * What the link gives a recipient OUTSIDE the team is the preview card: the
- * OG image is served by a Pages Function and read by WhatsApp/Signal without
- * credentials, so the title, date, leader and description still show up in the
- * chat before anyone signs in.
+ * The link opens a preview page anyone can read (title, date, leader,
+ * description, song count). The list itself still requires the team account.
+ *
+ * The card image is rendered ONCE here, at share time, and re-rendered on later
+ * saves only when a printed field changes — see the trigger in
+ * supabase/steps/10_list_meta_and_sharing.sql.
  */
 export function ShareListDialog({
   open,
   listId,
+  card,
   onClose,
 }: {
   open: boolean;
   listId: string;
+  /** Data to draw on the card, gathered by the caller from the list + items. */
+  card: CardData;
   onClose: () => void;
 }) {
   const [code, setCode] = useState<string | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,30 +38,31 @@ export function ShareListDialog({
     if (!open) return;
     setCopied(false);
     setError(null);
-    // Look for an existing live share so reopening the dialog doesn't mint a
-    // second link for the same list.
     void (async () => {
       const { data } = await supabase()
         .from('list_shares')
-        .select('code')
+        .select('code, card_ver')
         .eq('list_id', listId)
         .is('revoked_at', null)
         .maybeSingle();
-      setCode((data as { code?: string } | null)?.code ?? null);
+      const row = data as { code?: string; card_ver?: string } | null;
+      setCode(row?.code ?? null);
+      setVersion(row?.card_ver ?? null);
     })();
   }, [open, listId]);
 
   if (!open) return null;
 
   const shareUrl = code ? `${window.location.origin}/s/?c=${code}` : '';
-  const ogUrl = code ? `${window.location.origin}/api/og?c=${code}` : '';
 
   const create = async () => {
     setBusy(true);
     setError(null);
-    const { data, error: err } = await supabase().rpc('create_list_share', { p_list_id: listId });
-    setBusy(false);
+    const { data, error: err } = await supabase().rpc('create_list_share', {
+      p_list_id: listId,
+    });
     if (err || !data) {
+      setBusy(false);
       setError(
         /function .* does not exist/i.test(err?.message ?? '')
           ? '資料庫尚未更新。請先執行 supabase/steps/10_list_meta_and_sharing.sql。'
@@ -63,7 +70,18 @@ export function ShareListDialog({
       );
       return;
     }
-    setCode(data as string);
+
+    const res = data as { code: string; version: string | null };
+    // Draw and upload the card now, so the link has an image from the first share.
+    try {
+      await renderShareCard(listId, card);
+    } catch (e) {
+      // A missing image must not block sharing — the text preview still works.
+      setError(`分享卡片未能生成（${(e as Error).message}），連結仍可使用。`);
+    }
+    setCode(res.code);
+    setVersion(res.version);
+    setBusy(false);
   };
 
   const revoke = async () => {
@@ -76,6 +94,7 @@ export function ShareListDialog({
       return;
     }
     setCode(null);
+    setVersion(null);
   };
 
   const copy = async () => {
@@ -131,15 +150,14 @@ export function ShareListDialog({
               disabled={busy}
             >
               {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
-              建立分享連結
+              {busy ? '正在製作預覽卡…' : '建立分享連結'}
             </Button>
           </>
         ) : (
           <>
-            {/* Preview of the card recipients will see in WhatsApp. */}
             <div className="overflow-hidden rounded-xl border border-[var(--border)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={ogUrl} alt="分享預覽" className="block w-full" />
+              <img src={cardUrl(listId, version)} alt="分享預覽" className="block w-full" />
             </div>
 
             <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--soft)]/50 px-2.5 py-2">

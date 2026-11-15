@@ -1,5 +1,10 @@
 /**
- * OG share card image.
+ * OG share card image — PNG, not SVG.
+ *
+ * WhatsApp and Signal IGNORE SVG entirely (Meta's docs list only JPEG, PNG and
+ * GIF for og:image), so an SVG card produces no preview at all. The card is
+ * therefore authored as SVG and rasterised to PNG at the edge with resvg-wasm.
+ *
  *
  * Serves a 1200x630 PNG-ish SVG for a shared list, so WhatsApp / Signal show a
  * preview WITHOUT the recipient holding an account. That is the whole point of
@@ -105,14 +110,14 @@ function fitTitle(title: string, reserveDesc: boolean): { size: number; lines: s
   // description off the card is worse than a slightly smaller title.
   const maxLines = reserveDesc ? 1 : 2;
 
-  for (const size of [58, 52, 47, 41, 36, 31]) {
+  for (const size of [64, 58, 52, 46, 40, 34]) {
     const lines = wrap(flat, charsPerLine(size), maxLines);
     if (lines.join('').replace(/…$/, '').length >= flat.length) {
       return { size, lines };
     }
   }
   // Last resort: two lines at the minimum, still complete.
-  return { size: 31, lines: wrap(flat, charsPerLine(31), 2) };
+  return { size: 34, lines: wrap(flat, charsPerLine(34), 2) };
 }
 
 function formatDate(d: string | null): string {
@@ -124,7 +129,7 @@ function formatDate(d: string | null): string {
 }
 
 function render(card: ShareCard): string {
-  const titleY = 316;
+  const titleY = 300;
   const { size, lines } = fitTitle(card.title, Boolean(card.description));
   const titleH = lines.length * size * 1.18;
 
@@ -150,7 +155,9 @@ function render(card: ShareCard): string {
     )
     .join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"
+     font-family="'Noto Sans TC','Noto Sans CJK TC','Source Han Sans TC','WenQuanYi Zen Hei','PingFang TC','Helvetica Neue',Helvetica,Arial,sans-serif"
+     font-synthesis="none">
   <defs>
     <radialGradient id="g1" cx="92%" cy="6%" r="55%">
       <stop offset="0%" stop-color="#c8955a" stop-opacity="0.20"/>
@@ -177,20 +184,43 @@ function render(card: ShareCard): string {
   <text x="156" y="76" font-size="38" font-weight="700" fill="#1e3a5f" letter-spacing="-0.4">Sync Worship</text>
   <text x="156" y="104" font-size="22" fill="#5b6472">一同敬拜 · 同步睇譜</text>
 
-  <text x="${W - 72}" y="86" font-size="36" font-weight="600" fill="#a8763c" text-anchor="end">${esc(formatDate(card.event_date))}</text>
+  <text x="${W - 72}" y="86" font-size="36" font-weight="600" fill="#a8763c" text-anchor="end">${esc(formatDate(card.event_date))}<tspan font-size="27" dx="16" fill="#b9a68f">敬拜清單</tspan></text>
 
-  <text x="72" y="${titleY - 48}" font-size="27" font-weight="600" fill="#a8763c" letter-spacing="4">敬拜清單</text>
 
   ${titleSvg}
   ${descSvg}
 
   <line x1="72" y1="${H - 96}" x2="${W - 72}" y2="${H - 96}" stroke="#e0dbd2" stroke-width="1"/>
 
-  <text x="72" y="${H - 52}" font-size="36" fill="#1e2937">
-    <tspan fill="#5b6472" font-size="31">主領 </tspan><tspan font-weight="700" font-size="36" fill="#1e3a5f">${esc(card.leader_name || '—')}</tspan>
+  <text x="${W - 72}" y="${H - 52}" font-size="36" fill="#1e2937" text-anchor="end">
+    <tspan fill="#5b6472" font-size="31">主領 </tspan><tspan font-weight="700" fill="#1e3a5f">${esc(card.leader_name || '—')}</tspan>
   </text>
-  <text x="${W - 72}" y="${H - 52}" font-size="32" fill="#5b6472" text-anchor="end">${card.song_count} 首</text>
 </svg>`;
+}
+
+import { Resvg, initWasm } from '@resvg/resvg-wasm';
+// Bundled next to the Function by wrangler's wasm module rule.
+import wasmModule from '@resvg/resvg-wasm/index_bg.wasm';
+
+let wasmReady: Promise<void> | null = null;
+function ensureWasm(): Promise<void> {
+  if (!wasmReady) wasmReady = initWasm(wasmModule);
+  return wasmReady;
+}
+
+/** Rasterise the card. Returns image/png bytes. */
+async function toPng(svg: string): Promise<ArrayBuffer> {
+  await ensureWasm();
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: 'width', value: W },
+    // resvg has no system fonts on Workers. The SVG names a sans stack, and
+    // resvg falls back to its built-in sans for Han glyphs rather than a serif.
+    font: { loadSystemFonts: false, defaultFontFamily: 'sans-serif' },
+  });
+  const png = resvg.render().asPng();
+  // Copy into a plain ArrayBuffer: Response's BodyInit accepts BufferSource,
+  // and the wasm-returned view is backed by memory resvg no longer owns.
+  return new Uint8Array(png).buffer;
 }
 
 export async function onRequestGet({
@@ -231,7 +261,7 @@ export async function onRequestGet({
 
   if (!card || !card.title) {
     // A revoked or unknown link gets a neutral card rather than a broken image.
-    return new Response(
+    const fallback = await toPng(
       render({
         title: '此清單已停止分享',
         event_date: null,
@@ -239,13 +269,14 @@ export async function onRequestGet({
         description: null,
         song_count: 0,
       }),
-      { status: 200, headers: { 'Content-Type': 'image/svg+xml; charset=utf-8' } },
     );
+    return new Response(fallback, { status: 200, headers: { 'Content-Type': 'image/png' } });
   }
 
-  return new Response(render(card), {
+  const png = await toPng(render(card));
+  return new Response(png, {
     headers: {
-      'Content-Type': 'image/svg+xml; charset=utf-8',
+      'Content-Type': 'image/png',
       // Short cache: the card follows list edits, but scrapers re-fetch often.
       'Cache-Control': 'public, max-age=300, s-maxage=300',
     },
