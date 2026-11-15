@@ -116,27 +116,33 @@ export function ListDetailsDialog({
             />
           </div>
 
-          {/* Date and leader share a row, but a native date input carries text
-              PLUS a picker glyph, so it needs a floor. Below ~150px the browser
-              clips or overlaps it, which is what made these two collide. */}
-          <div className="grid grid-cols-[minmax(150px,auto)_1fr] gap-3">
-            <div className="min-w-0">
-              <Label>日期</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="min-w-0 pr-2 [color-scheme:light]"
-              />
-            </div>
-            <div className="min-w-0">
-              <Label>主領</Label>
-              <Input
-                value={leader}
-                onChange={(e) => setLeader(e.target.value)}
-                placeholder="例如：陳大文"
-                className="min-w-0"
-              />
+          {/* Date and leader sit side by side only where there is room for both.
+              Safari renders a native date input wider than Chrome does (text +
+              picker glyph + its own padding), so a two-column row that merely
+              "fits" in Chrome overlapped on iPhone 17. Below the container width
+              that can hold a 160px date field, the row stacks instead of
+              colliding. Grid + container queries means no JS and no guessing a
+              device width. */}
+          <div className="@container">
+            <div className="grid grid-cols-1 gap-3 @[300px]:grid-cols-[minmax(160px,1fr)_minmax(0,1fr)]">
+              <div className="min-w-0">
+                <Label>日期</Label>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="min-w-0 pr-2 [color-scheme:light]"
+                />
+              </div>
+              <div className="min-w-0">
+                <Label>主領</Label>
+                <Input
+                  value={leader}
+                  onChange={(e) => setLeader(e.target.value)}
+                  placeholder="例如：陳大文"
+                  className="min-w-0"
+                />
+              </div>
             </div>
           </div>
 

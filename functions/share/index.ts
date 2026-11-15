@@ -6,8 +6,12 @@
  * first time it is fetched. This Function rewrites the exported /s/index.html,
  * substituting the real title, description and og:image URL for that share code.
  *
- * It deliberately does NOT touch any other path: the app itself keeps its own
- * static metadata.
+ * WHY /share/ AND NOT /s/:
+ * Cloudflare Pages serves a matching static asset BEFORE running a Function, so
+ * a Function at functions/s.ts or functions/s/index.ts never fires — out/s/index.html
+ * wins and the tags are never injected (the preview came out blank). /share/ has
+ * no static file, so this Function is the only thing that can answer it. The app
+ * therefore shares /share/?c=CODE, and this file loads the real page from /s/.
  */
 
 type ShareCard = {
@@ -16,6 +20,8 @@ type ShareCard = {
   leader_name: string | null;
   description: string | null;
   song_count: number;
+  /** Storage path of the card PNG rendered when the list was shared. */
+  card_path?: string | null;
 };
 
 type PagesContext = {
@@ -52,21 +58,45 @@ async function fetchCard(code: string, env: PagesContext['env']): Promise<ShareC
 
 export async function onRequestGet(context: PagesContext): Promise<Response> {
   const url = new URL(context.request.url);
+  // Sentinels so a smoke test can prove this Function ran, rather than
+  // inferring it from the presence of tags.
+  const mark = (r: Response) => {
+    const h = new Headers(r.headers);
+    h.set('x-share-og', 'ran');
+    return new Response(r.body, { status: r.status, headers: h });
+  };
   const code = url.searchParams.get('c') ?? '';
 
   // No code: serve the plain page untouched.
   if (!/^[a-z0-9]{6,24}$/i.test(code)) {
-    return context.next();
+    // No/invalid code: send the visitor to the real page rather than 404.
+    return Response.redirect(new URL('/s/', url.origin).href, 302);
   }
 
-  const res = await context.next();
+  // Fetch the real share page from the static export. Fetching our own origin
+  // (not context.next(), which would resolve to this same Function) keeps the
+  // rendered app untouched apart from the head we splice.
+  // trailingSlash:true makes /s/index.html answer with a 307 back to /s/, so
+  // follow redirects — otherwise the visitor receives the redirect itself.
+  const appRes = await fetch(new URL(`/s/?c=${encodeURIComponent(code)}`, url.origin).href, {
+    headers: { 'User-Agent': 'syncworship-og-injector' },
+    redirect: 'follow',
+  });
+  if (!appRes.ok) return mark(appRes);
+  const res = appRes;
   const card = await fetchCard(code, context.env);
 
   // A missing/revoked list still gets the page; it shows its own "expired" state.
-  if (!card?.title) return res;
+  if (!card?.title) return mark(res);
 
-  const origin = url.origin;
-  const ogImage = `${origin}/api/og?c=${code}`;
+  // Point at the PNG the app already rendered and stored when the list was
+  // shared. Rendering again here would mean shipping a CJK font to the Worker,
+  // and a full Traditional-Chinese face is ~6 MB compressed — over the size
+  // limit even before resvg. The stored card is already correct and CDN-served.
+  const supabaseUrl = context.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const ogImage = card.card_path && supabaseUrl
+    ? `${supabaseUrl}/storage/v1/object/public/share-cards/${card.card_path}`
+    : `${url.origin}/api/og?c=${code}`;
 
   const title = `${card.title} · Sync Worship`;
   const descBits = [
@@ -97,13 +127,16 @@ export async function onRequestGet(context: PagesContext): Promise<Response> {
     .replace(/<title>[^<]*<\/title>/i, `<title>${esc(title)}</title>`)
     .replace(/<\/head>/i, `  ${tags}\n  </head>`);
 
+  // Do NOT copy upstream headers wholesale: Content-Encoding / Content-Length
+  // describe the ORIGINAL body, and carrying them onto rewritten HTML makes the
+  // runtime reject the response ("Unknown character encoding").
   return new Response(html, {
-    status: res.status,
+    status: 200,
     headers: {
-      ...Object.fromEntries(res.headers),
       'Content-Type': 'text/html; charset=utf-8',
       // Previews must reflect edits, but scrapers hit hard — keep it short.
       'Cache-Control': 'public, max-age=60, s-maxage=60',
+      'x-share-og': 'injected',
     },
   });
 }
