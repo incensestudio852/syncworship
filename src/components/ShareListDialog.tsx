@@ -4,32 +4,27 @@ import { useEffect, useState } from 'react';
 import { Check, Copy, Link2, Loader2, Share2, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { renderShareCard, cardUrl, type CardData } from '@/lib/shareCard';
-
 /**
  * Create / copy / revoke a list's share link.
  *
- * The link opens a preview page anyone can read (title, date, leader,
- * description, song count). The list itself still requires the team account.
+ * ONE state: the instruction and the create button are always visible, and the
+ * link block appears underneath once a link exists. Earlier this was two states
+ * that swapped the whole body, which meant the button vanished after use and the
+ * dialog looked like a different screen.
  *
- * The card image is rendered ONCE here, at share time, and re-rendered on later
- * saves only when a printed field changes — see the trigger in
- * supabase/steps/10_list_meta_and_sharing.sql.
+ * The link opens /s/?c=CODE — a public page showing title, date, leader,
+ * description and song count. Opening the list itself still needs an account.
  */
 export function ShareListDialog({
   open,
   listId,
-  card,
   onClose,
 }: {
   open: boolean;
   listId: string;
-  /** Data to draw on the card, gathered by the caller from the list + items. */
-  card: CardData;
   onClose: () => void;
 }) {
   const [code, setCode] = useState<string | null>(null);
-  const [version, setVersion] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,13 +38,12 @@ export function ShareListDialog({
     void (async () => {
       const { data } = await supabase()
         .from('list_shares')
-        .select('code, card_ver')
+        .select('code')
         .eq('list_id', listId)
         .is('revoked_at', null)
         .maybeSingle();
-      const row = data as { code?: string; card_ver?: string } | null;
+      const row = data as { code?: string } | null;
       setCode(row?.code ?? null);
-      setVersion(row?.card_ver ?? null);
     })();
   }, [open, listId]);
 
@@ -73,25 +67,8 @@ export function ShareListDialog({
       return;
     }
 
-    const res = data as { code: string; version: string | null };
-    // Draw and upload the card now, so the link has an image from the first share.
-    try {
-      await renderShareCard(listId, card);
-    } catch (e) {
-      // A missing image must not block sharing — the text preview still works.
-      // Translate the two setup failures into something actionable, because
-      // "Bucket not found" reads like a bug rather than a missing migration.
-      const msg = (e as Error).message ?? '';
-      setError(
-        /bucket not found/i.test(msg)
-          ? '預覽卡未啟用：資料庫尚未建立 share-cards 儲存桶。請執行 supabase/steps/11_share_cards_fixup.sql。連結仍可使用。'
-          : /column .*card_ver/i.test(msg)
-            ? '預覽卡未啟用：資料庫缺少 card_ver 欄位。請執行 supabase/steps/11_share_cards_fixup.sql。連結仍可使用。'
-            : `分享卡片未能生成（${msg}），連結仍可使用。`,
-      );
-    }
+    const res = data as { code: string; version?: string | null };
     setCode(res.code);
-    setVersion(res.version);
     setBusy(false);
   };
 
@@ -105,7 +82,6 @@ export function ShareListDialog({
       return;
     }
     setCode(null);
-    setVersion(null);
   };
 
   const copy = async (): Promise<boolean> => {
@@ -174,32 +150,25 @@ export function ShareListDialog({
           </button>
         </div>
 
-        {!code ? (
-          <>
-            <p className="text-[13px] leading-relaxed text-[var(--muted-fg)]">
-              建立一條分享連結。收到的人會看到清單名稱、日期、主領與說明的預覽卡；
-              開啟清單本身則需要以團隊帳號登入。
-            </p>
-            <Button
-              variant="primary"
-              className="mt-4 w-full"
-              onClick={() => void create()}
-              disabled={busy}
-            >
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
-              {busy ? '正在製作預覽卡…' : '建立分享連結'}
-            </Button>
-          </>
-        ) : (
-          <>
-            <p className="mb-2 text-[12px] leading-relaxed text-[var(--muted-fg)]">
-              收到連結的人會看到這張預覽卡。開啟清單本身仍需以團隊帳號登入。
-            </p>
-            <div className="overflow-hidden rounded-xl border border-[var(--border)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={cardUrl(listId, version)} alt="分享預覽" className="block w-full" />
-            </div>
+        {/* One state, not two. The intro copy and the button are always present;
+            the link block simply appears beneath them once one exists. A card
+            preview is deliberately not shown — the link opens a real page, so a
+            picture of it added height without adding information. */}
+        <p className="text-[13px] leading-relaxed text-[var(--muted-fg)]">
+          建立一條分享連結，以便隊員直接開啟此敬拜清單；開啟清單仍需要登入帳號。
+        </p>
+        <Button
+          variant="primary"
+          className="mt-4 w-full"
+          onClick={() => void create()}
+          disabled={busy || Boolean(code)}
+        >
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+          {busy ? '正在建立…' : '建立分享連結'}
+        </Button>
 
+        {code ? (
+          <>
             <div className="mt-3 flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--soft)]/50 px-2.5 py-2">
               <input
                 readOnly
@@ -234,7 +203,7 @@ export function ShareListDialog({
               撤銷這條連結
             </button>
           </>
-        )}
+        ) : null}
 
         {notice ? (
           <p className="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-700 dark:text-emerald-400">
