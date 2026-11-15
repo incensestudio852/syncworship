@@ -63,6 +63,8 @@ export type WorshipList = {
   title: string;
   event_date: string;
   leader_name: string | null;
+  /** Free text: what the service is about, plus any remarks. */
+  description: string | null;
   created_at: string;
   updated_at: string;
 };
