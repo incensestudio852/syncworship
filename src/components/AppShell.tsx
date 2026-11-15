@@ -48,8 +48,11 @@ function Inner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/';
   const isLogin = pathname.startsWith('/login');
   const isStage = /\/stage\/?$/.test(pathname);
+  // /s/ is the share landing page. It must render WITHOUT a session, because
+  // its job is to show the preview card to someone who has not signed in.
+  const isShare = /^\/s\/?$/.test(pathname);
 
-  if (isLogin) return <>{children}</>;
+  if (isLogin || isShare) return <>{children}</>;
 
   if (loading || !session) {
     return (

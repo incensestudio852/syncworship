@@ -9,6 +9,7 @@ import {
   GripVertical,
   Loader2,
   Pencil,
+  Share2,
   Plus,
   Radio,
   RefreshCw,
@@ -23,6 +24,8 @@ import { ConnectionBanner } from '@/components/ConnectionBanner';
 import { SongSearch } from '@/components/SongSearch';
 import { ConfirmDelete } from '@/components/ConfirmDialogs';
 import { Button, Card, Spinner } from '@/components/ui';
+import { ListDetailsDialog } from '@/components/ListDetailsDialog';
+import { ShareListDialog } from '@/components/ShareListDialog';
 import { formatDate, relativeTime, sortItems, weekdayZh } from '@/lib/chords';
 import { saveListCache, readListCache } from '@/lib/offlineCache';
 import { getDeviceName, setDeviceName, resolveDeviceName, fallbackDeviceName } from '@/lib/deviceName';
@@ -37,6 +40,8 @@ export default function ListEditorPage() {
   const { toast } = useToast();
 
   const [list, setList] = useState<WorshipList | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [items, setItems] = useState<ListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [offlineCopy, setOfflineCopy] = useState(false);
@@ -328,18 +333,43 @@ export default function ListEditorPage() {
           >
             <ArrowLeft size={13} /> 所有清單
           </Link>
-          <h1 className="mt-1 truncate text-xl font-semibold tracking-tight">{list.title}</h1>
+          <div className="mt-1 flex items-start gap-1.5">
+            <h1 className="min-w-0 truncate text-xl font-semibold tracking-tight">{list.title}</h1>
+            <button
+              onClick={() => setDetailsOpen(true)}
+              aria-label="編輯清單資料"
+              title="編輯名稱、日期、主領與說明"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--accent)]"
+            >
+              <Pencil size={13} />
+            </button>
+          </div>
           <p className="mt-0.5 text-xs text-[var(--muted-fg)]">
             {formatDate(list.event_date)} · {weekdayZh(list.event_date)}
-            {list.leader_name ? ` · 帶領：${list.leader_name}` : ''}
+            {list.leader_name ? ` · 主領：${list.leader_name}` : ''}
             {offlineCopy ? ' · 離線快取' : ''}
           </p>
+          {list.description ? (
+            <p className="mt-2 max-w-prose whitespace-pre-wrap text-[12.5px] leading-relaxed text-[var(--muted-fg)]">
+              {list.description}
+            </p>
+          ) : null}
         </div>
-        <Link href={`/stage/?id=${list.id}`}>
-          <Button variant="primary">
-            <Radio size={15} /> 開啟舞台模式
-          </Button>
-        </Link>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            onClick={() => setShareOpen(true)}
+            aria-label="分享清單"
+            title="分享清單"
+            className="grid h-9 w-9 place-items-center rounded-lg border border-[var(--border)] text-[var(--muted-fg)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          >
+            <Share2 size={15} />
+          </button>
+          <Link href={`/stage/?id=${list.id}`}>
+            <Button variant="primary">
+              <Radio size={15} /> 開啟舞台模式
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {liveItem ? (
