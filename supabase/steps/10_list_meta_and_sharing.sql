@@ -13,12 +13,44 @@
 alter table public.worship_lists
   add column if not exists description text;
 
+-- ---- 1b. Public bucket for share cards -------------------------------------
+-- The `sheets` bucket is PRIVATE on purpose: sheet images are licensed material
+-- and must stay behind signed URLs. Share cards are the opposite — WhatsApp has
+-- to fetch them with no credentials — so they live in their own public bucket
+-- and nothing else is ever written there.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('share-cards', 'share-cards', true, 2097152, array['image/png'])
+on conflict (id) do update set public = true;
+
+-- Only the authenticated app writes cards; anyone may read them.
+drop policy if exists "auth write share cards" on storage.objects;
+create policy "auth write share cards"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'share-cards');
+
+drop policy if exists "auth update share cards" on storage.objects;
+create policy "auth update share cards"
+  on storage.objects for update
+  to authenticated
+  using (bucket_id = 'share-cards');
+
+drop policy if exists "public read share cards" on storage.objects;
+create policy "public read share cards"
+  on storage.objects for select
+  to anon, authenticated
+  using (bucket_id = 'share-cards');
+
 -- ---- 2. Share links --------------------------------------------------------
 create table if not exists public.list_shares (
   code        varchar(12) primary key,
   list_id     uuid not null references public.worship_lists(id) on delete cascade,
   created_at  timestamptz not null default now(),
-  revoked_at  timestamptz
+  revoked_at  timestamptz,
+  -- Rendered share card. Rendered once at share time and re-rendered only when
+  -- a field the card actually prints changes (name/date/description/leader).
+  card_path   text,
+  card_ver    timestamptz default now()
 );
 create index if not exists list_shares_list on public.list_shares (list_id);
 
@@ -45,6 +77,48 @@ create policy "auth update shares"
 -- No DELETE policy on purpose: revoking sets revoked_at rather than deleting,
 -- so a card already scraped by a social platform keeps resolving to a
 -- "no longer shared" state instead of a 404 that looks like a broken link.
+
+-- ---- 2b. Re-render trigger -------------------------------------------------
+-- Adds a counter that changes ONLY when a printed field changes. `updated_at`
+-- moves on every list edit, so it cannot be used: a song reorder would needlessly
+-- re-render the card.
+create or replace function public.bump_list_card_version()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.title       is distinct from old.title
+  or new.event_date  is distinct from old.event_date
+  or new.leader_name is distinct from old.leader_name
+  or new.description is distinct from old.description then
+    update list_shares
+       set card_ver = now()
+     where list_id = new.id and revoked_at is null;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists list_card_version on public.worship_lists;
+create trigger list_card_version
+  after update on public.worship_lists
+  for each row execute function public.bump_list_card_version();
+
+-- Song count also changes the card. Count it in the same version stamp.
+create or replace function public.bump_card_on_items()
+returns trigger
+language plpgsql
+as $$
+declare lid uuid;
+begin
+  lid := coalesce(new.list_id, old.list_id);
+  update list_shares set card_ver = now() where list_id = lid and revoked_at is null;
+  return coalesce(new, old);
+end $$;
+
+drop trigger if exists list_card_on_items on public.list_items;
+create trigger list_card_on_items
+  after insert or delete on public.list_items
+  for each row execute function public.bump_card_on_items();
 
 -- ---- 3. Public share-card lookup ------------------------------------------
 -- Returns ONLY what the OG card draws. SECURITY DEFINER so anon can call it

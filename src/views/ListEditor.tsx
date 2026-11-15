@@ -527,6 +527,29 @@ export default function ListEditorPage() {
         </div>
       </div>
 
+      {list ? (
+        <>
+          <ListDetailsDialog
+            open={detailsOpen}
+            list={list}
+            onClose={() => setDetailsOpen(false)}
+            onSaved={(patch) => setList((cur) => (cur ? { ...cur, ...patch } : cur))}
+          />
+          <ShareListDialog
+            open={shareOpen}
+            listId={list.id}
+            card={{
+              title: list.title,
+              event_date: list.event_date,
+              leader_name: list.leader_name,
+              description: list.description,
+              song_count: items.length,
+            }}
+            onClose={() => setShareOpen(false)}
+          />
+        </>
+      ) : null}
+
       <ConfirmDelete
         open={Boolean(deleteItem)}
         title={`從清單移除《${deleteItem?.songs?.title ?? ''}》？`}
