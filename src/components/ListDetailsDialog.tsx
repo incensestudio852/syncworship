@@ -116,17 +116,26 @@ export function ListDetailsDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
+          {/* Date and leader share a row, but a native date input carries text
+              PLUS a picker glyph, so it needs a floor. Below ~150px the browser
+              clips or overlaps it, which is what made these two collide. */}
+          <div className="grid grid-cols-[minmax(150px,auto)_1fr] gap-3">
+            <div className="min-w-0">
               <Label>日期</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="min-w-0 pr-2 [color-scheme:light]"
+              />
             </div>
-            <div>
+            <div className="min-w-0">
               <Label>主領</Label>
               <Input
                 value={leader}
                 onChange={(e) => setLeader(e.target.value)}
                 placeholder="例如：陳大文"
+                className="min-w-0"
               />
             </div>
           </div>

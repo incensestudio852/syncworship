@@ -33,11 +33,13 @@ export function ShareListDialog({
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setCopied(false);
     setError(null);
+    setNotice(null);
     void (async () => {
       const { data } = await supabase()
         .from('list_shares')
@@ -77,7 +79,16 @@ export function ShareListDialog({
       await renderShareCard(listId, card);
     } catch (e) {
       // A missing image must not block sharing — the text preview still works.
-      setError(`分享卡片未能生成（${(e as Error).message}），連結仍可使用。`);
+      // Translate the two setup failures into something actionable, because
+      // "Bucket not found" reads like a bug rather than a missing migration.
+      const msg = (e as Error).message ?? '';
+      setError(
+        /bucket not found/i.test(msg)
+          ? '預覽卡未啟用：資料庫尚未建立 share-cards 儲存桶。請執行 supabase/steps/11_share_cards_fixup.sql。連結仍可使用。'
+          : /column .*card_ver/i.test(msg)
+            ? '預覽卡未啟用：資料庫缺少 card_ver 欄位。請執行 supabase/steps/11_share_cards_fixup.sql。連結仍可使用。'
+            : `分享卡片未能生成（${msg}），連結仍可使用。`,
+      );
     }
     setCode(res.code);
     setVersion(res.version);
@@ -97,19 +108,45 @@ export function ShareListDialog({
     setVersion(null);
   };
 
-  const copy = async () => {
+  const copy = async (): Promise<boolean> => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
+      return true;
     } catch {
       setError('未能複製，請長按選取連結。');
+      return false;
     }
   };
 
-  const waShare = () => {
+  /**
+   * Share the link.
+   *
+   * On a phone the native sheet is strictly better than a WhatsApp-only link:
+   * it lists every app the user actually has (WhatsApp, Signal, Telegram,
+   * Mail, Messages). `navigator.share` needs a user gesture and can be absent
+   * (desktop Chrome, some in-app browsers), so it is feature-detected and the
+   * caller falls back to WhatsApp, then to "copied".
+   */
+  const canNativeShare =
+    typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  const doShare = async () => {
     if (!shareUrl) return;
-    window.open(`https://wa.me/?text=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener');
+    if (canNativeShare) {
+      try {
+        await navigator.share({ title: 'Sync Worship 敬拜清單', url: shareUrl });
+        return;
+      } catch (e) {
+        // AbortError = user dismissed the sheet; anything else falls through.
+        if ((e as Error).name === 'AbortError') return;
+      }
+    }
+    // No share sheet: put the link on the clipboard and say so explicitly, so
+    // the user is not left wondering whether anything happened.
+    const ok = await copy();
+    if (ok) setNotice('連結已複製，可以直接貼到 WhatsApp 或其他應用程式。');
   };
 
   return (
@@ -178,11 +215,11 @@ export function ShareListDialog({
             </div>
 
             <div className="mt-3 flex gap-2">
-              <Button variant="primary" className="flex-1" onClick={waShare}>
-                WhatsApp 分享
+              <Button variant="primary" className="flex-1" onClick={() => void doShare()}>
+                {canNativeShare ? '分享' : '複製連結'}
               </Button>
               <Button variant="ghost" onClick={() => void copy()}>
-                {copied ? '已複製' : '複製連結'}
+                {copied ? '已複製' : '複製'}
               </Button>
             </div>
 
@@ -195,6 +232,12 @@ export function ShareListDialog({
             </button>
           </>
         )}
+
+        {notice ? (
+          <p className="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-700 dark:text-emerald-400">
+            {notice}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="mt-3 rounded-lg bg-rose-500/10 px-3 py-2 text-[12px] text-rose-600 dark:text-rose-400">
