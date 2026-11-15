@@ -349,11 +349,6 @@ export default function ListEditorPage() {
             {list.leader_name ? ` · 主領：${list.leader_name}` : ''}
             {offlineCopy ? ' · 離線快取' : ''}
           </p>
-          {list.description ? (
-            <p className="mt-2 max-w-prose whitespace-pre-wrap text-[12.5px] leading-relaxed text-[var(--muted-fg)]">
-              {list.description}
-            </p>
-          ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <button
@@ -371,6 +366,15 @@ export default function ListEditorPage() {
           </Link>
         </div>
       </div>
+
+      {/* Description gets its own full-width row. Inside the header it was
+          confined to the left column next to the buttons, so it wrapped at
+          roughly half the usable width. */}
+      {list.description ? (
+        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--muted-fg)]">
+          {list.description}
+        </p>
+      ) : null}
 
       {liveItem ? (
         <Card className="flex items-center gap-2 border-[var(--gold)]/40 bg-[var(--gold)]/8 px-3 py-2">

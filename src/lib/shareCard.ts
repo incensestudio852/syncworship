@@ -209,6 +209,13 @@ export async function renderShareCard(listId: string, card: CardData): Promise<s
       .upload(path, png, { upsert: true, contentType: 'image/png', cacheControl: '300' });
     if (error) throw error;
 
+    // Record the path on the share row so the OG endpoint can point at this
+    // exact PNG. Without it, /share/ falls back to the edge renderer, which has
+    // no CJK font and produces a card with no text.
+    await supabase()
+      .schema('public')
+      .rpc('set_share_card_path', { p_list_id: listId, p_path: path });
+
     return path;
   } finally {
     URL.revokeObjectURL(url);

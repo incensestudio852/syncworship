@@ -55,7 +55,7 @@ export function ShareListDialog({
 
   if (!open) return null;
 
-  const shareUrl = code ? `${window.location.origin}/s/?c=${code}` : '';
+  const shareUrl = code ? `${window.location.origin}/share/?c=${code}` : '';
 
   const create = async () => {
     setBusy(true);
@@ -177,8 +177,7 @@ export function ShareListDialog({
         {!code ? (
           <>
             <p className="text-[13px] leading-relaxed text-[var(--muted-fg)]">
-              建立一條分享連結。收到的人會看到清單名稱、日期、主領與說明的預覽卡；
-              開啟清單本身則需要以團隊帳號登入。
+              建立一條分享連結，以便隊員直接開啟此敬拜清單；開啟清單仍需要登入帳號。
             </p>
             <Button
               variant="primary"
@@ -192,8 +191,8 @@ export function ShareListDialog({
           </>
         ) : (
           <>
-            <p className="mb-2 text-[12px] leading-relaxed text-[var(--muted-fg)]">
-              收到連結的人會看到這張預覽卡。開啟清單本身仍需以團隊帳號登入。
+            <p className="mb-2 text-[13px] leading-relaxed text-[var(--muted-fg)]">
+              透過連結登入，可直接開啟此敬拜清單。
             </p>
             <div className="overflow-hidden rounded-xl border border-[var(--border)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
