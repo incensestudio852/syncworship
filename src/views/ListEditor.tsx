@@ -371,7 +371,7 @@ export default function ListEditorPage() {
           confined to the left column next to the buttons, so it wrapped at
           roughly half the usable width. */}
       {list.description ? (
-        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--muted-fg)]">
+        <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--muted-fg)]">
           {list.description}
         </p>
       ) : null}
