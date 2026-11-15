@@ -159,7 +159,7 @@ export function ShareListDialog({
       <div
         role="dialog"
         aria-label="分享清單"
-        className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5"
       >
         <div className="mb-3 flex items-start justify-between gap-2">
           <h2 className="flex items-center gap-1.5 text-base font-semibold">
@@ -178,7 +178,7 @@ export function ShareListDialog({
           <>
             <p className="text-[13px] leading-relaxed text-[var(--muted-fg)]">
               建立一條分享連結。收到的人會看到清單名稱、日期、主領與說明的預覽卡；
-              開啟清單本身則需要團隊帳號登入。
+              開啟清單本身則需要以團隊帳號登入。
             </p>
             <Button
               variant="primary"
@@ -192,6 +192,9 @@ export function ShareListDialog({
           </>
         ) : (
           <>
+            <p className="mb-2 text-[12px] leading-relaxed text-[var(--muted-fg)]">
+              收到連結的人會看到這張預覽卡。開啟清單本身仍需以團隊帳號登入。
+            </p>
             <div className="overflow-hidden rounded-xl border border-[var(--border)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={cardUrl(listId, version)} alt="分享預覽" className="block w-full" />
