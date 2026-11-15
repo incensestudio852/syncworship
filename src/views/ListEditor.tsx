@@ -542,6 +542,8 @@ export default function ListEditorPage() {
           <ShareListDialog
             open={shareOpen}
             listId={list.id}
+            listTitle={list.title}
+            eventDate={list.event_date}
             onClose={() => setShareOpen(false)}
           />
         </>

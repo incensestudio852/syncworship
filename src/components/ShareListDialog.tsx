@@ -18,10 +18,16 @@ import { supabase } from '@/lib/supabase';
 export function ShareListDialog({
   open,
   listId,
+  listTitle,
+  eventDate,
   onClose,
 }: {
   open: boolean;
   listId: string;
+  /** Title shown in the share message, e.g. 「E2E 測試崇拜」. */
+  listTitle: string;
+  /** ISO date; formatted for the message, e.g. 11月21日. */
+  eventDate: string | null;
   onClose: () => void;
 }) {
   const [code, setCode] = useState<string | null>(null);
@@ -84,9 +90,25 @@ export function ShareListDialog({
     setCode(null);
   };
 
+  /**
+   * A bare URL tells the reader nothing in a busy WhatsApp thread. Prefixing the
+   * date, the list name and a speaker emoji means the message still reads
+   * correctly when the link is stripped or the preview card does not load.
+   */
+  const shareMessage = (() => {
+    if (!shareUrl) return '';
+    const bits: string[] = [];
+    if (eventDate) {
+      const m = eventDate.match(/^\d{4}-(\d{2})-(\d{2})/);
+      if (m) bits.push(`📅 ${Number(m[1])}月${Number(m[2])}日`);
+    }
+    bits.push(`敬拜清單 - 📄${listTitle}`);
+    return `${bits.join(' ')}🔗 ${shareUrl}`;
+  })();
+
   const copy = async (): Promise<boolean> => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(shareMessage || shareUrl);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
       return true;
@@ -112,7 +134,9 @@ export function ShareListDialog({
     if (!shareUrl) return;
     if (canNativeShare) {
       try {
-        await navigator.share({ title: 'Sync Worship 敬拜清單', url: shareUrl });
+        // Share the composed text rather than `url`, so the receiving app shows
+        // the message body. `url` alone would drop the heading entirely.
+        await navigator.share({ title: `敬拜清單 - ${listTitle}`, text: shareMessage });
         return;
       } catch (e) {
         // AbortError = user dismissed the sheet; anything else falls through.
