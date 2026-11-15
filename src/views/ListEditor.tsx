@@ -422,12 +422,14 @@ export default function ListEditorPage() {
                   isLive ? 'border-[var(--gold)]' : 'border-[var(--border)]'
                 }`}
               >
-                {/* Sequence number and grab handle share one column: the number
-                    is the label, the grip is the affordance, and the whole cell
-                    is the drag/tap target. Two columns cost ~28px that the
-                    song title needs more than the number does. */}
+                {/* Sequence number and grab handle share one column: the grip
+                    is the affordance, the number is the label, and the whole
+                    cell is the drag/tap target. The grip sits at the top so it
+                    reads as a handle; the number is pushed to the vertical
+                    centre of the row by mt-auto, which keeps it aligned with
+                    the song title however tall the block grows. */}
                 <button
-                  className="group/grab flex min-h-[44px] w-8 shrink-0 cursor-grab touch-none flex-col items-center justify-start gap-0.5 pt-0.5 text-[var(--muted-fg)] active:cursor-grabbing"
+                  className="group/grab relative flex min-h-[44px] w-8 shrink-0 cursor-grab touch-none items-center justify-center text-[var(--muted-fg)] active:cursor-grabbing"
                   aria-label={`第 ${index + 1} 首，拖曳排序`}
                   title="拖曳排序；手機上點一下前移，長按後移"
                   onClick={() => moveBy(index, -1)}
@@ -436,7 +438,14 @@ export default function ListEditorPage() {
                     moveBy(index, 1);
                   }}
                 >
-                  <GripVertical size={13} className="opacity-60 transition-opacity group-hover/grab:opacity-100" />
+                  {/* Grip is pinned to the top edge; the number is centred in
+                      the whole cell. A flex column with justify-between put
+                      BOTH at the bottom, because the number's line box sat
+                      under the grip rather than opposite it. */}
+                  <GripVertical
+                    size={13}
+                    className="absolute left-1/2 top-0.5 -translate-x-1/2 opacity-60 transition-opacity group-hover/grab:opacity-100"
+                  />
                   <span className="font-mono text-[11px] leading-none tabular-nums">{index + 1}</span>
                 </button>
 
