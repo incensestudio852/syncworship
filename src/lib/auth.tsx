@@ -53,7 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isConfigured || loading) return;
     const onLogin = pathname?.startsWith('/login');
-    if (!session && !onLogin) {
+    // /s/ is the public share landing page. It MUST render for someone with no
+    // session — that is its entire purpose — so it is exempt here too. AppShell
+    // already skips its own gate for /s/, but this guard runs first and was
+    // bouncing every share link straight to /login.
+    const isPublic = /^\/s(\/|$)/.test(pathname ?? '');
+    if (!session && !onLogin && !isPublic) {
       const next = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/';
       router.replace(`/login${next && next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`);
     }
