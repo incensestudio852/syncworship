@@ -1,26 +1,15 @@
 {
   // Sync Worship is a pure static export (next.config.ts sets output: 'export'),
-  // deployed as Workers static assets.
+  // so it deploys as static assets — NOT via the OpenNext adapter.
   //
-  // `main` points at worker.ts, which is the ONLY way /share/ and /api/og can
-  // run in production: assets-only mode serves files and never executes code,
-  // so the Pages-style handlers in functions/ 404ed live while working under
-  // `wrangler pages dev`. worker.ts routes those two paths to the same handlers
-  // and sends everything else to the asset layer via env.ASSETS.
-  //
-  // Without an explicit assets.directory, `wrangler deploy` auto-detects
-  // Next.js, assumes a server app and looks for .next/standalone — so this pin
-  // stays.
+  // Without this file, `npx wrangler deploy` auto-detects Next.js and assumes a
+  // server app, then looks for .next/standalone/.next/server/pages-manifest.json
+  // and fails. Pinning `assets.directory` to `out` prevents that autoconfig.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "syncworship",
-  "main": "worker.ts",
   "compatibility_date": "2026-11-10",
   "assets": {
     "directory": "./out",
-    "binding": "ASSETS",
-    // /share/ and /api/og have no file on disk. run_worker_first sends them to
-    // worker.ts before the asset layer can answer with its own 404.
-    "run_worker_first": ["/share/*", "/api/*"],
     // Every route is a real directory with index.html (trailingSlash: true), so
     // assets map 1:1 onto URLs. 404-page keeps unknown paths honest instead of
     // silently serving the app shell.
