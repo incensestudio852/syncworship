@@ -344,11 +344,6 @@ export default function ListEditorPage() {
               <Pencil size={13} />
             </button>
           </div>
-          <p className="mt-0.5 text-xs text-[var(--muted-fg)]">
-            {formatDate(list.event_date)} · {weekdayZh(list.event_date)}
-            {list.leader_name ? ` · 主領：${list.leader_name}` : ''}
-            {offlineCopy ? ' · 離線快取' : ''}
-          </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <button
@@ -367,14 +362,22 @@ export default function ListEditorPage() {
         </div>
       </div>
 
-      {/* Description gets its own full-width row. Inside the header it was
-          confined to the left column next to the buttons, so it wrapped at
-          roughly half the usable width. */}
-      {list.description ? (
-        <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--muted-fg)]">
-          {list.description}
+      {/* Meta line and description share one full-width block below the header
+          row. Beside the buttons they were confined to the left column and
+          wrapped at roughly half the usable width. Kept in the same block, and
+          one size up, so the two read as one paragraph of list details. */}
+      <div className="space-y-1.5">
+        <p className="text-[13.5px] text-[var(--muted-fg)]">
+          {formatDate(list.event_date)} · {weekdayZh(list.event_date)}
+          {list.leader_name ? ` · 主領：${list.leader_name}` : ''}
+          {offlineCopy ? ' · 離線快取' : ''}
         </p>
-      ) : null}
+        {list.description ? (
+          <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-[var(--muted-fg)]">
+            {list.description}
+          </p>
+        ) : null}
+      </div>
 
       {liveItem ? (
         <Card className="flex items-center gap-2 border-[var(--gold)]/40 bg-[var(--gold)]/8 px-3 py-2">
