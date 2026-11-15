@@ -35,12 +35,39 @@ function esc(s: string): string {
     .replace(/'/g, '&apos;');
 }
 
-/** Greedy wrap by character count; CJK has no spaces to break on. */
+/** Usable text width inside the card's 72px side margins. */
+const USABLE = W - 72 * 2;
+
+/**
+ * Chars that fit on one line at a given size.
+ *
+ * CJK glyphs are ~1em wide, so this is a direct division rather than a guessed
+ * constant. Getting this wrong is what pushed long descriptions off the card.
+ */
+function charsPerLine(size: number): number {
+  // A CJK glyph is ~1em wide, so this is pure division. The old version shrank
+  // the divisor for "some latin", which OVERestimated how much fits and pushed
+  // long descriptions past the card edge.
+  //
+  // 0.98 guards against glyphs that render slightly wider than their em (some
+  // punctuation does), and the -1 keeps the last glyph off the margin.
+  return Math.max(6, Math.floor(USABLE / (size * 0.98)) - 1);
+}
+
+/**
+ * Wrap text to a character budget.
+ *
+ * CJK has no word spaces, so a greedy grab of `maxChars` is the correct unit;
+ * latin runs are broken at a space when one falls in the last third, which
+ * keeps English song titles from splitting mid-word.
+ */
 function wrap(text: string, maxChars: number, maxLines: number): string[] {
   const clean = text.replace(/\s+/g, ' ').trim();
-  if (!clean) return [];
+  if (!clean || maxLines <= 0) return [];
+
   const lines: string[] = [];
   let rest = clean;
+
   while (rest && lines.length < maxLines) {
     if (rest.length <= maxChars) {
       lines.push(rest);
@@ -48,15 +75,18 @@ function wrap(text: string, maxChars: number, maxLines: number): string[] {
       break;
     }
     let cut = maxChars;
-    // Prefer breaking at latin word boundaries when one is close.
     const space = rest.lastIndexOf(' ', maxChars);
-    if (space > maxChars * 0.6) cut = space;
+    // Only honour a space break if it does not waste most of the line.
+    if (space > maxChars * 0.7) cut = space;
     lines.push(rest.slice(0, cut).trim());
     rest = rest.slice(cut).trim();
   }
-  if (rest && lines.length === maxLines) {
-    const last = lines[maxLines - 1];
-    lines[maxLines - 1] = last.length > maxChars - 1 ? last.slice(0, maxChars - 1) + '…' : last + '…';
+
+  // Anything left over becomes an ellipsis on the final line.
+  if (rest) {
+    const i = lines.length - 1;
+    const trimmed = lines[i].replace(/[\s，。、；：]$/, '');
+    lines[i] = trimmed.length >= maxChars ? trimmed.slice(0, maxChars - 1) + '…' : trimmed + '…';
   }
   return lines;
 }
@@ -68,16 +98,21 @@ function wrap(text: string, maxChars: number, maxLines: number): string[] {
  * readable rather than being clipped. Mirrors the fit logic used in the card
  * preview, so what was approved is what ships.
  */
-function fitTitle(title: string): { size: number; lines: string[] } {
-  const wide = 46; // approx chars per line at full size (CJK)
-  for (const size of [64, 58, 52, 46, 40, 34]) {
-    const perLine = Math.round((wide * 64) / size);
-    const lines = wrap(title, perLine, 2);
-    if (lines.join('').replace(/…$/, '').length >= title.replace(/\s+/g, ' ').trim().length) {
+function fitTitle(title: string, reserveDesc: boolean): { size: number; lines: string[] } {
+  const flat = title.replace(/\s+/g, ' ').trim();
+  // When a description is present the title may use fewer lines at large
+  // sizes, so the description always keeps a place. A title that pushes the
+  // description off the card is worse than a slightly smaller title.
+  const maxLines = reserveDesc ? 1 : 2;
+
+  for (const size of [58, 52, 47, 41, 36, 31]) {
+    const lines = wrap(flat, charsPerLine(size), maxLines);
+    if (lines.join('').replace(/…$/, '').length >= flat.length) {
       return { size, lines };
     }
   }
-  return { size: 34, lines: wrap(title, Math.round((wide * 64) / 34), 2) };
+  // Last resort: two lines at the minimum, still complete.
+  return { size: 31, lines: wrap(flat, charsPerLine(31), 2) };
 }
 
 function formatDate(d: string | null): string {
@@ -89,11 +124,17 @@ function formatDate(d: string | null): string {
 }
 
 function render(card: ShareCard): string {
-  const { size, lines } = fitTitle(card.title);
+  const titleY = 316;
+  const { size, lines } = fitTitle(card.title, Boolean(card.description));
   const titleH = lines.length * size * 1.18;
-  const titleY = 300;
 
-  const descLines = card.description ? wrap(card.description, 30, 2) : [];
+  // Keep the description inside its own band: it must not touch the divider.
+  const descTop = titleY + titleH + 12;
+  const maxDescLines = Math.max(0, Math.floor((H - 96 - 18 - descTop) / 58));
+
+  const descLines = card.description && maxDescLines > 0
+    ? wrap(card.description, charsPerLine(40), maxDescLines)
+    : [];
 
   const titleSvg = lines
     .map(
@@ -105,7 +146,7 @@ function render(card: ShareCard): string {
   const descSvg = descLines
     .map(
       (ln, i) =>
-        `<text x="72" y="${titleY + titleH + 8 + i * 33}" font-size="22" fill="#33404f">${esc(ln)}</text>`,
+        `<text x="72" y="${titleY + titleH + 12 + i * 58}" font-size="40" fill="#33404f">${esc(ln)}</text>`,
     )
     .join('');
 
@@ -126,29 +167,29 @@ function render(card: ShareCard): string {
   <rect width="${W}" height="${H}" fill="url(#g2)"/>
 
   <!-- logo mark -->
-  <rect x="72" y="52" width="46" height="46" rx="12" fill="#1e3a5f"/>
+  <rect x="72" y="44" width="64" height="64" rx="16" fill="#1e3a5f"/>
   <g fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M9 18V6l10-2v12" transform="translate(82 63) scale(1.25)"/>
-    <circle cx="88.5" cy="85.5" r="3.6"/>
-    <circle cx="101" cy="83" r="3.6"/>
+    <path d="M9 18V6l10-2v12" transform="translate(85 55) scale(1.75)"/>
+    <circle cx="93.5" cy="90" r="5"/>
+    <circle cx="111" cy="86" r="5"/>
   </g>
 
-  <text x="130" y="74" font-size="21" font-weight="700" fill="#1e3a5f">Sync Worship</text>
-  <text x="130" y="94" font-size="12" fill="#5b6472">一同敬拜 · 同步睇譜</text>
+  <text x="156" y="76" font-size="38" font-weight="700" fill="#1e3a5f" letter-spacing="-0.4">Sync Worship</text>
+  <text x="156" y="104" font-size="22" fill="#5b6472">一同敬拜 · 同步睇譜</text>
 
-  <text x="${W - 72}" y="78" font-size="20" font-weight="600" fill="#a8763c" text-anchor="end">${esc(formatDate(card.event_date))}</text>
+  <text x="${W - 72}" y="86" font-size="36" font-weight="600" fill="#a8763c" text-anchor="end">${esc(formatDate(card.event_date))}</text>
 
-  <text x="72" y="${titleY - 44}" font-size="15" font-weight="600" fill="#a8763c" letter-spacing="3">敬拜清單</text>
+  <text x="72" y="${titleY - 48}" font-size="27" font-weight="600" fill="#a8763c" letter-spacing="4">敬拜清單</text>
 
   ${titleSvg}
   ${descSvg}
 
   <line x1="72" y1="${H - 96}" x2="${W - 72}" y2="${H - 96}" stroke="#e0dbd2" stroke-width="1"/>
 
-  <text x="72" y="${H - 56}" font-size="20" fill="#1e2937">
-    <tspan fill="#5b6472" font-size="17">主領 </tspan><tspan font-weight="700" fill="#1e3a5f">${esc(card.leader_name || '—')}</tspan>
+  <text x="72" y="${H - 52}" font-size="36" fill="#1e2937">
+    <tspan fill="#5b6472" font-size="31">主領 </tspan><tspan font-weight="700" font-size="36" fill="#1e3a5f">${esc(card.leader_name || '—')}</tspan>
   </text>
-  <text x="${W - 72}" y="${H - 56}" font-size="18" fill="#5b6472" text-anchor="end">${card.song_count} 首</text>
+  <text x="${W - 72}" y="${H - 52}" font-size="32" fill="#5b6472" text-anchor="end">${card.song_count} 首</text>
 </svg>`;
 }
 
