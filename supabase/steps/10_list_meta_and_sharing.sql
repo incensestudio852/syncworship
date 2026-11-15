@@ -148,30 +148,35 @@ revoke all on function public.get_share_card(text) from public;
 grant execute on function public.get_share_card(text) to anon, authenticated;
 
 -- ---- 4. Create / revoke helpers (authenticated only) ----------------------
-create or replace function public.create_list_share(p_list_id uuid)
-returns text
+-- Returns json, not text, so the client gets the card version alongside the
+-- code. Postgres refuses `create or replace` across a return-type change, so
+-- the old signature is dropped first. Dropping a function never touches rows.
+drop function if exists public.create_list_share(uuid);
+
+create function public.create_list_share(p_list_id uuid)
+returns json
 language plpgsql
 security definer
 set search_path = public
 as $$
-declare new_code text;
+declare v_code text;
+        v_ver  timestamptz;
+        v_path text;
 begin
   -- Reuse an existing live share for this list rather than minting duplicates.
-  select code into new_code
+  select code, card_ver, card_path into v_code, v_ver, v_path
   from list_shares
   where list_id = p_list_id and revoked_at is null
   limit 1;
 
-  if new_code is not null then
-    return new_code;
+  if v_code is null then
+    -- 12 chars from gen_random_uuid(), which is cryptographic in Postgres.
+    v_code := substr(replace(gen_random_uuid()::text, '-', ''), 1, 12);
+    insert into list_shares (code, list_id) values (v_code, p_list_id)
+    returning card_ver, card_path into v_ver, v_path;
   end if;
 
-  -- 12 chars from a CSPRNG-ish source: enough that guessing a live code is
-  -- impractical. gen_random_uuid() is cryptographic in Postgres.
-  new_code := substr(replace(gen_random_uuid()::text, '-', ''), 1, 12);
-
-  insert into list_shares (code, list_id) values (new_code, p_list_id);
-  return new_code;
+  return json_build_object('code', v_code, 'version', v_ver, 'card_path', v_path);
 end $$;
 
 revoke all on function public.create_list_share(uuid) from public;

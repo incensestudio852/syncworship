@@ -77,7 +77,12 @@ create trigger list_card_on_items
   for each row execute function public.bump_card_on_items();
 
 -- ---- 4. create_list_share must return the version --------------------------
-create or replace function public.create_list_share(p_list_id uuid)
+-- The earlier version returned `text`; this one returns `json`. Postgres refuses
+-- `create or replace` when the return type changes, so the old function is
+-- dropped first. Dropping a function does NOT touch data — list_shares rows stay.
+drop function if exists public.create_list_share(uuid);
+
+create function public.create_list_share(p_list_id uuid)
 returns json
 language plpgsql
 security definer
