@@ -507,17 +507,48 @@ export default function StagePage() {
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-10">
             <div className="mx-auto max-w-3xl">
-              <div className="mb-4 flex items-baseline gap-2.5">
-                <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+              {/* Title takes the remaining width and truncates; the key group is
+                  shrink-0 so a long title can never push the transpose controls
+                  off screen. `min-w-0` on the h1 is what allows truncation —
+                  without it a flex child refuses to shrink below content width. */}
+              <div className="mb-4 flex items-center gap-2.5">
+                <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold tracking-tight sm:text-3xl">
                   {current?.songs?.title ?? '—'}
                 </h1>
-                {songKey ? (
-                  <span className="shrink-0 rounded-md bg-[var(--soft)] px-2 py-0.5 font-mono text-sm font-semibold text-[var(--accent)]">
-                    {songKey}
-                  </span>
-                ) : null}
-                {sungKey && offset !== 0 ? (
-                  <span className="shrink-0 font-mono text-sm text-[var(--gold)]">→ {sungKey}</span>
+
+                {sungKey ? (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {/* Current sounding key, with the service key kept visible
+                        once transposed so the leader can see the shift. */}
+                    <span className="rounded-md bg-[var(--soft)] px-2 py-0.5 font-mono text-sm font-semibold text-[var(--accent)]">
+                      {sungKey}
+                    </span>
+                    {offset !== 0 && songKey ? (
+                      <span className="font-mono text-[11px] text-[var(--gold)]">{songKey}</span>
+                    ) : null}
+
+                    {/* Transpose stepper sits beside the key it changes, not in
+                        the bottom bar: the result is immediately visible here. */}
+                    <div className="flex items-center rounded-lg border border-[var(--border)]">
+                      <button
+                        onClick={() => setOffset((v) => v - 1)}
+                        aria-label="降半音"
+                        className="grid h-8 w-8 place-items-center rounded-l-lg text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--accent)]"
+                      >
+                        −
+                      </button>
+                      <span className="min-w-7 text-center font-mono text-[11px] tabular-nums text-[var(--muted-fg)]">
+                        {offset > 0 ? `+${offset}` : offset}
+                      </span>
+                      <button
+                        onClick={() => setOffset((v) => v + 1)}
+                        aria-label="升半音"
+                        className="grid h-8 w-8 place-items-center rounded-r-lg text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--accent)]"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                 ) : null}
               </div>
               <ChordLyrics
@@ -733,32 +764,6 @@ export default function StagePage() {
           >
             {plan === 'sheet' ? <FileText size={16} /> : <FileImage size={16} />}
           </Button>
-        ) : null}
-
-        {plan === 'lyrics' && sungKey ? (
-          <div className="flex items-center rounded-lg border border-[var(--border)]">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="!min-h-[32px] !px-1.5"
-              onClick={() => setOffset((v) => v - 1)}
-              aria-label="降半音"
-            >
-              −
-            </Button>
-            <span className="min-w-10 text-center font-mono text-[11px] text-[var(--muted-fg)]">
-              {offset > 0 ? `+${offset}` : offset}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="!min-h-[32px] !px-1.5"
-              onClick={() => setOffset((v) => v + 1)}
-              aria-label="升半音"
-            >
-              +
-            </Button>
-          </div>
         ) : null}
 
         {chordKey && plan === 'lyrics' ? (
