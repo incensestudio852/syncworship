@@ -5,12 +5,21 @@ import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 const base =
-  'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]';
+  'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]';
+
+/**
+ * The hard 4px offset shadow is this system's ONLY elevation language — a flat,
+ * sticker-like print shadow rather than a blurred material one. Pressing a
+ * button pushes it down into the shadow, so the affordance reads physically.
+ *
+ * Ghost buttons deliberately have no shadow: they are inline icon/text
+ * controls, and fifteen offset slabs on a dense list would be noise.
+ */
+const stamp = 'shadow-[0_4px_0_0_#000] active:translate-y-[4px] active:shadow-none';
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-[var(--accent)] text-white hover:brightness-105 active:brightness-95',
-  secondary:
-    'border border-[var(--border)] bg-[var(--card)] text-[var(--fg)] hover:bg-[var(--soft)]',
+  primary: `bg-[var(--accent)] text-white hover:brightness-105 ${stamp}`,
+  secondary: `border border-[var(--fg)] bg-[var(--card)] text-[var(--fg)] hover:bg-[var(--soft)] ${stamp}`,
   ghost: 'text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--fg)]',
   danger: 'bg-rose-600 text-white hover:bg-rose-700',
 };
@@ -52,7 +61,7 @@ export function Input({
   return (
     <input
       ref={ref}
-      className={`w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-[var(--fg)] outline-none placeholder:text-[var(--muted-fg)]/70 focus:border-[var(--accent)] ${className}`}
+      className={`w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-[var(--fg)] outline-none placeholder:text-[var(--muted-fg)]/70 focus:border-[var(--accent)] ${className}`}
       {...rest}
     />
   );
@@ -69,7 +78,7 @@ export function Label({ children, hint }: { children: ReactNode; hint?: ReactNod
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-[var(--border)] bg-[var(--card)] ${className}`}>
+    <div className={`rounded-3xl border border-[var(--border)] bg-[var(--card)] ${className}`}>
       {children}
     </div>
   );

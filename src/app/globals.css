@@ -7,28 +7,41 @@
   --font-mono: 'SF Mono', ui-monospace, Menlo, monospace;
 }
 
+/* ============================================================
+   MetaMusic editorial palette
+   ------------------------------------------------------------
+   The whole app reads these nine variables, so retheming happens
+   here and nowhere else: no component had to change, and no
+   font file or stylesheet is fetched at runtime.
+
+   Paper Cream canvas -> White card -> Blue wash -> Indigo panel.
+   Brand Blue is the single chromatic voice: actions and active
+   states. Gold is gone; LIVE keeps its word, not its colour.
+   ============================================================ */
 :root {
-  --bg: #f7f6f3;
-  --card: #ffffff;
-  --soft: #efede8;
-  --fg: #1e2937;
-  --muted-fg: #6b7280;
-  --border: #e2ded6;
-  --accent: #1e3a5f;
-  --accent-soft: #e8edf3;
-  --gold: #c8955a;
+  --bg: #f4f1ea; /* Paper Cream  */
+  --card: #ffffff; /* White        */
+  --soft: #e9f4ff; /* Ice Blue wash */
+  --fg: #101820; /* Charcoal Ink */
+  --muted-fg: #6d7378; /* readable on cream; #d6d6d6 is a border, not text */
+  --border: #d6d6d6; /* Ash Border   */
+  --accent: #0066cc; /* Brand Blue   */
+  --accent-soft: #e6e0f8; /* Lavender Mist */
+  --gold: #0066cc; /* retired: active states are blue now */
 }
 
 .dark {
-  --bg: #0d1117;
-  --card: #151b23;
-  --soft: #1e2630;
-  --fg: #e6e8ea;
-  --muted-fg: #9aa4b1;
-  --border: #26303b;
-  --accent: #7fa6d1;
-  --accent-soft: #1c2836;
-  --gold: #d3a571;
+  /* Dark mode keeps its identity but swaps the near-black canvas for the
+     doc's Deep Indigo, so both themes share one accent hue. */
+  --bg: #0e2575; /* Deep Indigo   */
+  --card: #213680; /* Midnight Card */
+  --soft: #1a2f6e;
+  --fg: #f4f1ea; /* Paper Cream   */
+  --muted-fg: #b3bfd6;
+  --border: #2f4699;
+  --accent: #7fb2ff; /* Brand Blue lifted for contrast on indigo */
+  --accent-soft: #2c4290;
+  --gold: #7fb2ff;
 }
 
 html,

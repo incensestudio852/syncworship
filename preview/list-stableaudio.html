@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>敬拜清單 · Stable Audio 風格預覽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Stable Audio style tokens
+   ============================================================ */
+:root{
+  --amber-pulse:#f9a916;
+  --lime-signal:#a0f32f;
+  --lavender-wash:#c4bae3;
+  --mustard-field:#e1ca46;
+  --sage-mist:#9fc2c7;
+  --khaki-paper:#e5dfc8;
+  --warm-canvas:#f4f1ec;
+  --pure-paper:#ffffff;
+  --pale-mist:#e2e2e7;
+  --hairline:#d2d1db;
+  --ink-stone:#27262b;
+  --charcoal:#000000;
+  --ash:#737170;
+
+  --font-inter:'Inter',ui-sans-serif,system-ui,-apple-system,"PingFang TC","Noto Sans TC",sans-serif;
+
+  --radius-card:4px;
+  --radius-pill:9999px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--warm-canvas);
+  color:var(--charcoal);
+  font-family:var(--font-inter);
+  font-size:16px;
+  line-height:1.5;
+  letter-spacing:-0.1px;
+  -webkit-font-smoothing:antialiased;
+}
+/* no shadows anywhere — depth is surface colour only */
+a{color:inherit;text-decoration:none;}
+
+/* ---------- header bar: transparent on cream ---------- */
+.bar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:20px 24px;
+  max-width:1280px;margin:0 auto;
+}
+@media(max-width:430px){
+  .bar{padding:16px 16px;gap:8px;}
+  .brand{gap:8px;min-width:0;}
+  .brand .name{font-size:16px;}
+  .brand .sub{font-size:11px;}
+  .bar-actions .pill-amber{padding:10px 16px;font-size:13px;}
+  .icon-pill{width:36px;height:36px;}
+}
+.brand{display:flex;align-items:center;gap:10px;}
+/* sun-burst mark */
+.brand .mark{
+  width:30px;height:30px;flex:none;position:relative;
+  display:grid;place-items:center;
+}
+.brand .mark::before{
+  content:"";width:18px;height:18px;border-radius:50%;
+  background:var(--amber-pulse);
+}
+.brand .mark::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  border:2px solid var(--charcoal);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+  opacity:0;
+}
+.brand .name{font-weight:700;font-size:18px;letter-spacing:-0.2px;white-space:nowrap;}
+.brand .sub{font-size:12px;color:var(--ash);letter-spacing:-0.07px;line-height:1.2;white-space:nowrap;}
+
+.bar-actions{display:flex;align-items:center;gap:8px;}
+
+/* ---------- pills ---------- */
+.pill{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border-radius:var(--radius-pill);
+  font-family:var(--font-inter);font-weight:700;
+  cursor:pointer;border:1px solid transparent;
+  transition:transform .12s ease, background .12s ease;
+  white-space:nowrap;
+}
+.pill:active{transform:scale(.97);}
+.pill-amber{background:var(--amber-pulse);color:var(--charcoal);padding:12px 24px;font-size:15px;}
+.pill-amber:hover{background:#efb62f;}
+.pill-ghost{background:var(--pure-paper);color:var(--charcoal);border-color:var(--charcoal);padding:8px 20px;font-size:14px;}
+.pill-dark{background:var(--ink-stone);color:var(--pure-paper);padding:6px 16px;font-size:13px;}
+.pill-dark:hover{background:#3a3940;}
+.pill-sm{padding:8px 18px;font-size:13px;}
+
+/* icon-only round control */
+.icon-pill{
+  width:40px;height:40px;padding:0;flex:none;
+  background:var(--pure-paper);border:1px solid var(--charcoal);
+  color:var(--charcoal);border-radius:var(--radius-pill);
+  display:grid;place-items:center;cursor:pointer;
+}
+.icon-pill:hover{background:var(--khaki-paper);}
+
+/* ---------- page shell ---------- */
+.wrap{max-width:1280px;margin:0 auto;padding:8px 24px 96px;}
+
+/* ---------- list hero card ---------- */
+.hero{
+  background:var(--pure-paper);
+  border-radius:var(--radius-card);
+  padding:24px;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:20px;
+}
+@media(min-width:860px){
+  .hero{grid-template-columns:1fr 260px;align-items:start;padding:40px;}
+}
+
+.eyebrow{
+  font-size:12px;font-weight:700;letter-spacing:-0.07px;
+  text-transform:uppercase;color:var(--ash);
+  margin:0 0 12px;
+}
+.hero h1{
+  margin:0;
+  font-size:30px;line-height:1.33;font-weight:700;letter-spacing:-0.51px;
+}
+@media(min-width:860px){
+  .hero h1{font-size:40px;line-height:1.15;letter-spacing:-0.84px;}
+}
+.meta{
+  margin:16px 0 0;
+  font-size:14px;line-height:1.43;letter-spacing:-0.09px;
+  color:var(--ash);
+}
+.desc{
+  margin:12px 0 0;
+  font-size:16px;line-height:1.56;letter-spacing:-0.1px;
+  color:var(--ink-stone);
+  max-width:56ch;
+}
+.hero-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px;}
+
+/* half-circle "sun" artwork block — the signature motif */
+.art{
+  aspect-ratio:1/1;
+  border-radius:var(--radius-card);
+  background:var(--khaki-paper);
+  overflow:hidden;
+  position:relative;
+  display:block;
+}
+.art::before{
+  content:"";
+  position:absolute;left:0;right:0;top:0;height:50%;
+  background:var(--lime-signal);
+  border-radius:0 0 50% 50%/0 0 100% 100%;
+}
+.art .count{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:16px;
+  font-size:12px;font-weight:700;letter-spacing:-0.07px;
+  color:var(--ink-stone);
+}
+.art .count b{font-size:30px;letter-spacing:-0.51px;display:block;line-height:1.2;}
+
+/* ---------- section heading ---------- */
+.sec-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:16px;margin:48px 0 16px;
+}
+.sec-head h2{
+  margin:0;font-size:20px;line-height:1.5;font-weight:700;letter-spacing:-0.3px;
+}
+.sec-head span{font-size:14px;color:var(--ash);letter-spacing:-0.09px;}
+
+/* ---------- song cards ---------- */
+.list{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;}
+
+.song{
+  background:var(--pure-paper);
+  border-radius:var(--radius-card);
+  padding:16px 20px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:start;
+  gap:16px;
+}
+@media(min-width:720px){
+  .song{padding:20px 24px;gap:20px;}
+}
+
+/* sequence number — big and bold, the way track order reads on a record */
+.seq{
+  font-size:20px;font-weight:700;line-height:1.5;
+  letter-spacing:-0.3px;color:var(--charcoal);
+  width:28px;flex:none;
+  font-variant-numeric:tabular-nums;
+}
+
+.song-body{min-width:0;}
+.song-title{
+  margin:0;font-size:16px;font-weight:700;letter-spacing:-0.1px;
+  line-height:1.4;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.song-sub{
+  margin:4px 0 0;font-size:14px;letter-spacing:-0.09px;color:var(--ash);
+}
+
+/* flow chips — pill, per the system's non-negotiable radius rule */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+.chip{
+  border:1px solid var(--charcoal);
+  border-radius:var(--radius-pill);
+  padding:3px 10px;font-size:12px;font-weight:700;letter-spacing:-0.07px;
+  background:transparent;color:var(--charcoal);
+}
+.chip.live{
+  background:var(--lime-signal);border-color:var(--lime-signal);color:var(--charcoal);
+  display:inline-flex;align-items:center;gap:5px;
+}
+/* waveform bars inside the live chip — lime only ever marks audio */
+.chip.live .wave{display:inline-flex;align-items:flex-end;gap:1.5px;height:9px;}
+.chip.live .wave i{width:2px;background:var(--ink-stone);border-radius:1px;display:block;}
+.chip.live .wave i:nth-child(1){height:4px;}
+.chip.live .wave i:nth-child(2){height:9px;}
+.chip.live .wave i:nth-child(3){height:6px;}
+
+/* right-hand actions */
+.song-actions{display:flex;align-items:center;gap:8px;flex:none;}
+
+/* transition note between songs */
+.transition{
+  display:flex;justify-content:center;
+  margin:0 0 8px;
+}
+.transition .pill-ghost{
+  font-size:12px;padding:4px 14px;border-color:var(--hairline);color:var(--ash);
+  font-weight:400;background:transparent;
+}
+
+/* ---------- footer actions ---------- */
+.footer{display:flex;justify-content:space-between;gap:12px;margin-top:40px;}
+
+/* ---------- empty-state swatch strip (feature-panel rhythm) ---------- */
+.swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:48px;}
+.swatches div{height:8px;border-radius:var(--radius-card);}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <span class="mark"></span>
+    <span>
+      <span class="name">Sync Worship</span><br>
+      <span class="sub">一同敬拜 · 同步睇譜</span>
+    </span>
+  </div>
+  <div class="bar-actions">
+    <button class="icon-pill" aria-label="分享清單">↗</button>
+    <button class="pill pill-amber">開啟舞台模式 <span aria-hidden="true">→</span></button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- list hero -->
+  <section class="hero">
+    <div>
+      <p class="eyebrow">敬拜清單</p>
+      <h1>20261114 青少年聚會</h1>
+      <p class="meta">2026年11月14日 · 週六 · 主領：西瓜、信恩</p>
+      <p class="desc">本週主題：成為祝福。會前 30 分鐘集合練歌，請自備耳機及水。</p>
+      <div class="hero-actions">
+        <button class="pill pill-dark pill-sm">編輯清單資料</button>
+        <button class="pill pill-ghost">複製給隊員</button>
+      </div>
+    </div>
+    <div class="art">
+      <span class="count"><b>3</b>首詩歌</span>
+    </div>
+  </section>
+
+  <div class="sec-head">
+    <h2>曲目</h2>
+    <span>拖曳排序</span>
+  </div>
+
+  <ol class="list">
+
+    <li class="song">
+      <span class="seq">1</span>
+      <div class="song-body">
+        <p class="song-title">我們高舉耶穌的名</p>
+        <p class="song-sub">C Key · 72 bpm</p>
+        <div class="chips">
+          <span class="chip live"><span class="wave"><i></i><i></i><i></i></span>LIVE</span>
+          <span class="chip">C</span>
+          <span class="chip">C</span>
+          <span class="chip">Intro</span>
+          <span class="chip">動態 7</span>
+        </div>
+      </div>
+      <div class="song-actions">
+        <button class="pill pill-dark">推送</button>
+      </div>
+    </li>
+
+    <div class="transition"><span class="pill-ghost">接 Pad 鋪底</span></div>
+
+    <li class="song">
+      <span class="seq">2</span>
+      <div class="song-body">
+        <p class="song-title">從心合一</p>
+        <p class="song-sub">G Key · 68 bpm</p>
+        <div class="chips">
+          <span class="chip">V1</span>
+          <span class="chip">C</span>
+          <span class="chip">C</span>
+          <span class="chip">Bridge</span>
+          <span class="chip">動態 5</span>
+        </div>
+      </div>
+      <div class="song-actions">
+        <button class="pill pill-dark">推送</button>
+      </div>
+    </li>
+
+    <div class="transition"><span class="pill-ghost">無縫接歌</span></div>
+
+    <li class="song">
+      <span class="seq">3</span>
+      <div class="song-body">
+        <p class="song-title">大山為我挪開</p>
+        <p class="song-sub">D Key · 76 bpm</p>
+        <div class="chips">
+          <span class="chip">V1</span>
+          <span class="chip">C</span>
+          <span class="chip">C</span>
+          <span class="chip">自由敬拜</span>
+          <span class="chip">動態 9</span>
+        </div>
+      </div>
+      <div class="song-actions">
+        <button class="pill pill-dark">推送</button>
+      </div>
+    </li>
+
+  </ol>
+
+  <div class="footer">
+    <button class="pill pill-ghost pill-sm">重新整理</button>
+    <button class="pill pill-ghost pill-sm" style="border-color:var(--hairline);color:var(--ash)">刪除此清單</button>
+  </div>
+
+  <!-- rhythm strip: the panel palette, used as a quiet nod to the system -->
+  <div class="swatches" aria-hidden="true">
+    <div style="background:var(--lavender-wash)"></div>
+    <div style="background:var(--mustard-field)"></div>
+    <div style="background:var(--sage-mist)"></div>
+    <div style="background:var(--khaki-paper)"></div>
+  </div>
+
+</main>
+
+</body>
+</html>
