@@ -64,7 +64,7 @@ export function StageMetricsPanel({
         <span className="rounded-md bg-[var(--soft)] px-1.5 py-0.5 font-mono font-medium">
           {keyLabel(sungKey) || '—'}
           {offset !== 0 ? (
-            <span className="ml-1 text-[var(--gold)]">{offset > 0 ? `+${offset}` : offset}</span>
+            <span className="ml-1 text-[var(--live)]">{offset > 0 ? `+${offset}` : offset}</span>
           ) : null}
         </span>
         {tempo ? (

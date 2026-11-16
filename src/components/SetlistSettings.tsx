@@ -298,7 +298,7 @@ export function TransitionPicker({
           aria-pressed={value === t.id}
           className={`min-h-[28px] rounded-md border px-2 text-[11px] ${
             value === t.id
-              ? 'border-[var(--gold)] bg-[var(--gold)]/15 font-medium text-[var(--gold)]'
+              ? 'border-[var(--accent)]/40 bg-[var(--accent-soft)] font-medium text-[var(--accent)]'
               : 'border-[var(--border)] text-[var(--muted-fg)] hover:bg-[var(--soft)]'
           }`}
         >

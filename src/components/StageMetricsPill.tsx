@@ -164,7 +164,7 @@ export function StageMetricsPill({
           {transition ? (
             <span className="flex w-full items-center gap-1 border-t border-[var(--border)] pt-1 leading-tight">
               <span className="shrink-0 text-[9px] text-[var(--muted-fg)]">接</span>
-              <span className="min-w-0 truncate text-[10px] text-[var(--gold)]">
+              <span className="min-w-0 truncate text-[10px] text-[var(--muted-fg)]">
                 {transition}
                 {item.transition_note ? ` · ${item.transition_note}` : ''}
               </span>

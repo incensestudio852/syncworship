@@ -206,7 +206,7 @@ function ListRow({
           <span>· {row.item_count} 首</span>
         </p>
         {row.live_song ? (
-          <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--gold)]">
+          <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--live)]">
             <Radio size={11} className="animate-pulse" /> 台上：{row.live_song}
           </p>
         ) : null}

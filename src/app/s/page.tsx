@@ -93,7 +93,7 @@ function ShareView() {
         </div>
 
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[var(--gold)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[var(--accent)]">
             敬拜清單
           </p>
           <h1 className="mt-1.5 text-2xl font-bold leading-snug tracking-tight">{card!.title}</h1>

@@ -23,7 +23,7 @@ export function highlight(text: string, query: string): ReactNode {
     parts.push(
       <mark
         key={`${at}-${parts.length}`}
-        className="rounded bg-[var(--gold)]/30 px-[1px] text-inherit"
+        className="rounded bg-[var(--accent-soft)] px-[1px] text-inherit"
       >
         {text.slice(at, at + target.length)}
       </mark>,
