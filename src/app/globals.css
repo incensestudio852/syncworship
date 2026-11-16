@@ -31,17 +31,18 @@
 }
 
 .dark {
-  /* Dark mode keeps its identity but swaps the near-black canvas for the
-     doc's Deep Indigo, so both themes share one accent hue. */
-  --bg: #0e2575; /* Deep Indigo   */
-  --card: #213680; /* Midnight Card */
-  --soft: #1a2f6e;
-  --fg: #f4f1ea; /* Paper Cream   */
-  --muted-fg: #b3bfd6;
-  --border: #2f4699;
-  --accent: #7fb2ff; /* Brand Blue lifted for contrast on indigo */
-  --accent-soft: #2c4290;
-  --gold: #7fb2ff;
+  /* Near-black dark mode restored. Only the accent follows the editorial
+     palette (Brand Blue lifted for contrast); every surface is a dark neutral,
+     because navy panels made the stage screen feel lit rather than dim. */
+  --bg: #0d1117;
+  --card: #151b23;
+  --soft: #1e2630;
+  --fg: #e6e8ea;
+  --muted-fg: #9aa4b1;
+  --border: #26303b;
+  --accent: #5b9df9;
+  --accent-soft: #1c2836;
+  --gold: #5b9df9;
 }
 
 html,
