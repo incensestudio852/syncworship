@@ -299,12 +299,14 @@ export default function StagePage() {
     return transposeLyrics(raw, offset, sungKey);
   }, [current?.songs?.lyrics, offset, sungKey]);
 
-  // A new song starts from its own key, not the previous song's transpose, and
-  // on its preferred pane rather than whatever the last song was showing.
+  // A new song starts from its own key, not the previous song's transpose.
+  //
+  // The VIEW is deliberately NOT reset: if the leader has chosen lyrics, every
+  // later song stays on lyrics. Resetting to the sheet on each change meant the
+  // pane flipped back mid-set, which is exactly when nobody can afford to hunt
+  // for the toggle. Songs with no sheet still fall back to lyrics via `plan`.
   useEffect(() => {
     setOffset(0);
-    setView('sheet');
-    setViewChosen(false);
   }, [current?.id]);
 
   const isLive = Boolean(liveSongId && current?.song_id === liveSongId);
