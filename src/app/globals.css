@@ -21,12 +21,12 @@
 :root {
   --bg: #f4f1ea; /* Paper Cream  */
   --card: #ffffff; /* White        */
-  --soft: #e9f4ff; /* Ice Blue wash */
+  --soft: #b8e9ff; /* Ice Mist */
   --fg: #101820; /* Charcoal Ink */
   --muted-fg: #6d7378; /* readable on cream; #d6d6d6 is a border, not text */
   --border: #d6d6d6; /* Ash Border   */
   --accent: #0066cc; /* Brand Blue   */
-  --accent-soft: #e6e0f8; /* Lavender Mist */
+  --accent-soft: #b8e9ff; /* Ice Mist */
   --gold: #0066cc; /* retired: active states are blue now */
 }
 
