@@ -1,7 +1,8 @@
 'use client';
 
-import { Music2, Moon, Settings2, Sun } from 'lucide-react';
+import { Moon, Settings2, Sun } from 'lucide-react';
 import Link from 'next/link';
+import { BrandMark } from '@/components/BrandMark';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -21,9 +22,7 @@ export function TopBar() {
     <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--bg)]/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-1.5 px-2.5 sm:gap-2 sm:px-5">
         <Link href="/" className="flex min-h-[40px] shrink-0 items-center gap-2 font-semibold tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--accent)] text-white">
-            <Music2 size={17} />
-          </span>
+          <BrandMark size={32} />
           <span className="hidden whitespace-nowrap text-[15px] min-[430px]:inline sm:text-base">Sync Worship</span>
         </Link>
 

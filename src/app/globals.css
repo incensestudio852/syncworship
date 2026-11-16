@@ -28,6 +28,10 @@
   --accent: #0066cc; /* Brand Blue   */
   --accent-soft: #dbeafe; /* Soft Blue Tint — selected states, tested against blue text (4.56:1) */
   --gold: #0066cc; /* retired: active states are blue now */
+  --live: #c2410c; /* warm: "currently playing", never confusable with a selection */
+  --live-soft: #fde8dc;
+  --hover: #eef4fb; /* interactive feedback */
+  --field: #f7f6f2; /* input surfaces, distinct from chips */
 }
 
 .dark {
@@ -43,6 +47,10 @@
   --accent: #5b9df9;
   --accent-soft: #1c2836;
   --gold: #5b9df9;
+  --live: #fb923c;
+  --live-soft: #3a2418;
+  --hover: #1e2630;
+  --field: #131920;
 }
 
 html,

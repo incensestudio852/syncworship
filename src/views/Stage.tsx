@@ -474,7 +474,7 @@ export default function StagePage() {
             </button>
           ) : null}
           {isLive ? (
-            <span className="flex items-center gap-1 rounded-full bg-[var(--gold)]/20 px-2 py-0.5 text-[10px] text-[var(--gold)]">
+            <span className="flex items-center gap-1 rounded-full bg-[var(--live)] px-2 py-0.5 text-[10px] font-medium text-white">
               <Radio size={10} className="animate-pulse" /> Live
             </span>
           ) : null}
@@ -703,7 +703,7 @@ export default function StagePage() {
 
         {live ? (
           <div className="pointer-events-none absolute bottom-[5.5rem] left-0 right-0 flex justify-center">
-            <span className="rounded-full bg-black/40 px-3 py-1 text-[10px] text-white backdrop-blur">
+            <span className="rounded-full border border-[var(--live)]/30 bg-[var(--live-soft)] px-3 py-1 text-[10px] font-medium text-[var(--live)]">
               {live.pushed_by_name ? `由 ${live.pushed_by_name} 推送 · ` : ''}
               {relativeTime(live.updated_at)}
             </span>
@@ -713,9 +713,14 @@ export default function StagePage() {
 
       {/* bottom bar */}
       <div className="flex shrink-0 items-center gap-0.5 border-t border-[var(--border)] px-1.5 pb-[env(safe-area-inset-bottom)] [height:calc(3.66rem+env(safe-area-inset-bottom))]">
-        <Button variant="ghost" size="sm" onClick={() => go(-1)} disabled={index <= 0} aria-label="上一首">
-          <ChevronLeft size={26} />
-        </Button>
+        <button
+          onClick={() => go(-1)}
+          disabled={index <= 0}
+          aria-label="上一首"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--fg)] transition-colors hover:bg-[var(--hover)] disabled:opacity-35 disabled:hover:bg-[var(--card)]"
+        >
+          <ChevronLeft size={24} strokeWidth={2.25} />
+        </button>
 
         <div className="min-w-0 flex-1 text-center leading-tight">
           {/* Title with the song's key beside it: the key is what a player checks
@@ -738,15 +743,14 @@ export default function StagePage() {
           </p>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={() => go(1)}
           disabled={index >= items.length - 1}
           aria-label="下一首"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--fg)] transition-colors hover:bg-[var(--hover)] disabled:opacity-35 disabled:hover:bg-[var(--card)]"
         >
-          <ChevronRight size={26} />
-        </Button>
+          <ChevronRight size={24} strokeWidth={2.25} />
+        </button>
 
         <div className="mx-0.5 h-6 w-px bg-[var(--border)]" />
 

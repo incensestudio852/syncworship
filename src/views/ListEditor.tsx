@@ -421,8 +421,10 @@ export default function ListEditorPage() {
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => onDrop(index)}
-                className={`group flex items-start gap-2 rounded-xl border bg-[var(--card)] px-2 py-2.5 transition-colors ${
-                  isLive ? 'border-[var(--gold)]' : 'border-[var(--border)]'
+                className={`group flex items-start gap-2 rounded-3xl border px-2 py-2.5 transition-colors ${
+                  isLive
+                    ? 'border-[var(--live)]/40 bg-[var(--live-soft)]'
+                    : 'border-[var(--border)] bg-[var(--card)] hover:bg-[var(--hover)]'
                 }`}
               >
                 {/* Grip at the very top, number well below it.
@@ -456,7 +458,8 @@ export default function ListEditorPage() {
                   <div className="flex items-center gap-1.5">
                     <p className="truncate text-sm font-medium">{item.songs?.title ?? '（已刪除）'}</p>
                     {isLive ? (
-                      <span className="shrink-0 rounded bg-[var(--gold)]/20 px-1 text-[9px] font-semibold uppercase tracking-wide text-[var(--gold)]">
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--live)] px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-wide text-white">
+                        <span className="h-[4px] w-[4px] rounded-full bg-white" />
                         Live
                       </span>
                     ) : null}
@@ -486,9 +489,11 @@ export default function ListEditorPage() {
                     ~56px rather than ~90px. */}
                 <div className="flex shrink-0 flex-col items-center gap-1 self-start">
                   <Button
-                    variant={isLive ? 'secondary' : 'primary'}
+                    variant="secondary"
                     size="sm"
-                    className="!flex-col !gap-0.5 !px-2 !py-1.5 sm:!flex-row sm:!gap-1.5 sm:!px-2.5"
+                    className={`!flex-col !gap-0.5 !px-2 !py-1.5 sm:!flex-row sm:!gap-1.5 sm:!px-2.5 ${
+                      isLive ? '!border-[var(--live)]/40 !bg-transparent !text-[var(--live)]' : '!text-[var(--accent)]'
+                    }`}
                     disabled={pushingId === item.id || status === 'offline'}
                     onClick={() => void doPush(item)}
                     aria-label="推送上台"
