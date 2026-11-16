@@ -524,7 +524,7 @@ export default function StagePage() {
                       {sungKey}
                     </span>
                     {offset !== 0 && songKey ? (
-                      <span className="font-mono text-[11px] text-[var(--gold)]">{songKey}</span>
+                      <span className="font-mono text-[11px] text-[var(--muted-fg)]">{songKey}</span>
                     ) : null}
 
                     {/* Transpose stepper sits beside the key it changes, not in
@@ -683,7 +683,7 @@ export default function StagePage() {
                       aria-label={`推送 ${it.songs?.title ?? ''} 上台`}
                       className={`my-1 mr-1.5 flex shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                         onLive
-                          ? 'bg-[var(--soft)] text-[var(--gold)]'
+                          ? 'bg-[var(--live-soft)] text-[var(--live)]'
                           : 'bg-[var(--accent)] text-white hover:brightness-110'
                       }`}
                     >

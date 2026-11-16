@@ -16,7 +16,10 @@
 
    Paper Cream canvas -> White card -> Blue wash -> Indigo panel.
    Brand Blue is the single chromatic voice: actions and active
-   states. Gold is gone; LIVE keeps its word, not its colour.
+   states. The old gold token is fully retired — every usage was
+   moved to an explicit token (--live, --chord, --muted-fg, accent
+   family), so nothing depends on it and re-adding it would only
+   invite drift back to the old palette.
    ============================================================ */
 :root {
   --bg: #f4f1ea; /* Paper Cream  */
@@ -27,11 +30,11 @@
   --border: #d6d6d6; /* Ash Border   */
   --accent: #0066cc; /* Brand Blue   */
   --accent-soft: #dbeafe; /* Soft Blue Tint — selected states, tested against blue text (4.56:1) */
-  --gold: #0066cc; /* retired: active states are blue now */
   --live: #c2410c; /* warm: "currently playing", never confusable with a selection */
   --live-soft: #fde8dc;
   --hover: #eef4fb; /* interactive feedback */
   --field: #f7f6f2; /* input surfaces, distinct from chips */
+  --chord: #0066cc; /* chord glyphs — own token so it can diverge from --accent */
 }
 
 .dark {
@@ -46,11 +49,11 @@
   --border: #26303b;
   --accent: #5b9df9;
   --accent-soft: #1c2836;
-  --gold: #5b9df9;
   --live: #fb923c;
   --live-soft: #3a2418;
   --hover: #1e2630;
   --field: #131920;
+  --chord: #5b9df9;
 }
 
 html,
@@ -76,7 +79,7 @@ body {
   font-size: 0.78em;
   line-height: 1.15;
   font-weight: 600;
-  color: var(--gold);
+  color: var(--chord);
   white-space: pre;
   min-height: 1.15em;
   letter-spacing: -0.02em;
