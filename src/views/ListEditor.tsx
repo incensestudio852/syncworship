@@ -380,13 +380,13 @@ export default function ListEditorPage() {
       </div>
 
       {liveItem ? (
-        <Card className="flex items-center gap-2 border-[var(--gold)]/40 bg-[var(--gold)]/8 px-3 py-2">
-          <Radio size={14} className="shrink-0 animate-pulse text-[var(--gold)]" />
+        <Card className="flex items-center gap-2 border-[var(--live)]/30 bg-[var(--live-soft)] px-3 py-2">
+          <Radio size={14} className="shrink-0 animate-pulse text-[var(--live)]" />
           <p className="min-w-0 flex-1 truncate text-sm">
-            <span className="text-[var(--muted-fg)]">Live：</span>
-            {liveItem.songs?.title}
+            <span className="text-[var(--live)]/80">Live：</span>
+            <span className="font-medium">{liveItem.songs?.title}</span>
           </p>
-          <span className="shrink-0 text-[11px] text-[var(--muted-fg)]">
+          <span className="shrink-0 text-[11px] text-[var(--live)]/70">
             {live?.pushed_by_name ? `由 ${live.pushed_by_name} 推送 · ` : ''}
             {relativeTime(live?.updated_at)}
           </span>

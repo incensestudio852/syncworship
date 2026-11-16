@@ -35,7 +35,7 @@ export function IncomingPushBanner({
 }) {
   return (
     <div
-      className="pointer-events-auto absolute left-1/2 top-10 z-40 flex w-max max-w-[min(80vw,280px)] -translate-x-1/2 items-center gap-1.5 rounded-full border border-[var(--accent)]/40 bg-[var(--card)]/97 py-1 pl-1 pr-1.5 shadow-lg backdrop-blur"
+      className="pointer-events-auto absolute left-1/2 top-10 z-40 flex w-max max-w-[min(80vw,280px)] -translate-x-1/2 items-center gap-1.5 rounded-full border border-[var(--live)]/35 bg-[var(--live-soft)]/97 py-1 pl-1 pr-1.5 shadow-lg backdrop-blur"
       role="status"
       aria-live="polite"
       aria-label="收到推送"
@@ -43,12 +43,12 @@ export function IncomingPushBanner({
       <button
         onClick={onDismiss}
         aria-label="留在目前詩歌"
-        className="order-last grid h-6 w-6 shrink-0 place-items-center rounded-full text-[var(--muted-fg)] hover:bg-[var(--soft)]"
+        className="order-last grid h-6 w-6 shrink-0 place-items-center rounded-full text-[var(--live)]/70 hover:bg-[var(--live)]/15"
       >
         <X size={13} />
       </button>
 
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-white">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--live)] text-white">
         <Radio size={13} />
       </span>
 
@@ -56,12 +56,12 @@ export function IncomingPushBanner({
         <p className="truncate text-[13px] font-semibold leading-tight" title={title}>
           {truncateTitle(title)}
         </p>
-        <p className="truncate text-[10px] leading-tight text-[var(--muted-fg)]">由 {by} 推送</p>
+        <p className="truncate text-[10px] leading-tight text-[var(--live)]/80">由 {by} 推送</p>
       </div>
 
       <button
         onClick={onAccept}
-        className="min-h-[30px] shrink-0 rounded-full bg-[var(--accent)] px-2.5 text-[12px] font-semibold text-white"
+        className="min-h-[30px] shrink-0 rounded-full bg-[var(--live)] px-2.5 text-[12px] font-semibold text-white"
       >
         切換
       </button>

@@ -703,7 +703,7 @@ export default function StagePage() {
 
         {live ? (
           <div className="pointer-events-none absolute bottom-[5.5rem] left-0 right-0 flex justify-center">
-            <span className="rounded-full border border-[var(--live)]/30 bg-[var(--live-soft)] px-3 py-1 text-[10px] font-medium text-[var(--live)]">
+            <span className="rounded-full bg-black/40 px-3 py-1 text-[10px] text-white backdrop-blur">
               {live.pushed_by_name ? `由 ${live.pushed_by_name} 推送 · ` : ''}
               {relativeTime(live.updated_at)}
             </span>
