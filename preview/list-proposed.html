@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>清單檢視 · 建議版</title>
+<style>
+/* ============================================================
+   Uses the app's ACTUAL current tokens (globals.css), so what you
+   see here is what the site would look like after the changes:
+     --bg        #f4f1ea  Paper Cream
+     --card      #ffffff
+     --soft      #e9f4ff  Ice Blue
+     --fg        #101820  Charcoal Ink
+     --muted-fg  #6d7378
+     --border    #d6d6d6  Ash
+     --accent    #0066cc  Brand Blue
+     --accent-soft #dbeafe Soft Blue Tint
+   ============================================================ */
+:root{
+  --bg:#f4f1ea; --card:#ffffff; --soft:#e9f4ff; --fg:#101820;
+  --muted-fg:#6d7378; --border:#d6d6d6; --accent:#0066cc;
+  --accent-soft:#dbeafe;
+
+  /* SUGGESTION 1: LIVE gets its own token so "playing" never reads as
+     "selected". Warm hue, distinct from every blue in the system. */
+  --live:#c2410c;
+  --live-soft:#fde8dc;
+
+  /* SUGGESTION 3: --soft was doing three jobs. Split:
+       --hover  interactive feedback
+       --field  input/search surfaces */
+  --hover:#eef4fb;
+  --field:#f7f6f2;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  margin:0;padding:24px;background:#e5e0d6;color:var(--fg);
+  font-family:"PingFang TC","Noto Sans TC",-apple-system,sans-serif;
+  font-size:14px;line-height:1.45;
+}
+.phone{
+  width:390px;background:var(--bg);border-radius:18px;overflow:hidden;
+  box-shadow:0 8px 32px rgba(20,30,50,.14);
+  padding:14px 14px 28px;display:flex;flex-direction:column;gap:14px;
+}
+
+/* ---------- top bar ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--accent);display:grid;place-items:center;}
+.mark i{width:8px;height:8px;border-radius:50%;border:1.5px solid #fff;display:block;}
+.iconbtn{
+  width:32px;height:32px;border-radius:9999px;border:1px solid var(--border);
+  background:var(--card);display:grid;place-items:center;font-size:13px;
+  color:var(--muted-fg);cursor:pointer;
+}
+.iconbtn:hover{background:var(--hover);}
+
+/* ---------- header ---------- */
+.back{font-size:12px;color:var(--muted-fg);}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:4px;}
+.hdr h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-.3px;line-height:1.25;}
+.meta{margin:6px 0 0;font-size:13px;color:var(--muted-fg);}
+.desc{margin:4px 0 0;font-size:13px;line-height:1.6;color:var(--muted-fg);}
+
+/* SUGGESTION 2: 開啟舞台模式 is the ONE filled button on this screen.
+   分享 became an icon; 推送 below is now outline. */
+.btn-primary{
+  background:var(--accent);color:#fff;border:0;border-radius:9999px;
+  padding:9px 16px;font-size:13px;font-weight:500;font-family:inherit;
+  white-space:nowrap;cursor:pointer;flex:none;
+}
+.hdr-actions{display:flex;gap:6px;align-items:center;flex:none;}
+
+/* ---------- live banner ---------- */
+.livebar{
+  display:flex;align-items:center;gap:8px;
+  border:1px solid color-mix(in srgb,var(--live) 30%, transparent);
+  background:var(--live-soft);border-radius:24px;padding:8px 12px;font-size:13px;
+}
+.livebar .ring{
+  width:8px;height:8px;border-radius:50%;background:var(--live);flex:none;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--live) 20%, transparent);
+}
+
+/* ---------- search ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:12px;}
+.search{
+  display:flex;align-items:center;gap:8px;background:var(--field);
+  border:1px solid var(--border);border-radius:8px;padding:9px 12px;
+  font-size:13px;color:var(--muted-fg);
+}
+
+/* ---------- song rows ---------- */
+.rows{display:flex;flex-direction:column;gap:8px;}
+
+.row{
+  background:var(--card);border:1px solid var(--border);border-radius:24px;
+  padding:10px 12px;display:flex;align-items:flex-start;gap:8px;
+  transition:background .12s ease;
+}
+.row:hover{background:var(--hover);}
+
+/* LIVE row: warm border + soft wash, unmistakable next to selected chips */
+.row.is-live{
+  border-color:color-mix(in srgb,var(--live) 40%, transparent);
+  background:color-mix(in srgb,var(--live) 5%, var(--card));
+}
+.row.is-live:hover{background:color-mix(in srgb,var(--live) 9%, var(--card));}
+
+/* grab column: grip top, number centred */
+.grab{
+  width:32px;min-height:64px;flex:none;display:flex;align-items:center;
+  justify-content:center;position:relative;color:var(--muted-fg);
+  cursor:grab;
+}
+.grab .g{position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:11px;opacity:.55;line-height:1;}
+.grab .n{font-family:ui-monospace,Menlo,monospace;font-size:11px;transform:translateY(4px);}
+
+.body{flex:1;min-width:0;}
+.title-row{display:flex;align-items:center;gap:6px;}
+.title-row .t{
+  margin:0;font-size:14px;font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* SUGGESTION 1 in practice: LIVE badge is warm, not blue, and carries a dot
+   so the signal survives for anyone who can't separate the hues. */
+.badge{
+  flex:none;display:inline-flex;align-items:center;gap:4px;
+  border-radius:9999px;padding:1px 8px 1px 6px;
+  font-size:10px;font-weight:600;letter-spacing:.02em;
+  background:var(--live);color:#fff;
+}
+.badge .dot{width:5px;height:5px;border-radius:50%;background:#fff;}
+
+/* selected chip: Soft Blue Tint, clearly "chosen" not "playing" */
+.keyrow{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.chip{
+  border-radius:9999px;padding:2px 9px;font-size:11px;
+  border:1px solid var(--border);background:var(--card);color:var(--muted-fg);
+}
+.chip.on{
+  background:var(--accent-soft);color:var(--accent);font-weight:500;
+  border-color:color-mix(in srgb,var(--accent) 35%, transparent);
+}
+
+/* SUGGESTION 2: 推送 demoted to outline — it is a row action, not the
+   screen's primary action. The filled blue is reserved for the stage button. */
+.actions{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none;}
+.push{
+  border:1px solid color-mix(in srgb,var(--accent) 45%, transparent);
+  background:var(--card);color:var(--accent);
+  border-radius:9999px;padding:6px 11px;font-size:11px;font-weight:500;
+  font-family:inherit;display:flex;align-items:center;gap:4px;
+  cursor:pointer;white-space:nowrap;
+}
+.push:hover{background:var(--accent-soft);}
+.push.is-live{
+  background:var(--live-soft);color:var(--live);
+  border-color:color-mix(in srgb,var(--live) 40%, transparent);
+}
+.trash{
+  width:32px;height:26px;border-radius:9999px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted-fg);display:grid;place-items:center;
+  font-size:11px;cursor:pointer;
+}
+.trash:hover{background:var(--hover);}
+
+/* transition between songs */
+.between{display:flex;justify-content:center;padding:2px 0 2px 32px;}
+.between span{
+  border:1px solid var(--border);border-radius:9999px;background:var(--card);
+  font-size:11px;color:var(--muted-fg);padding:3px 12px;
+}
+
+.cap{font-size:11px;font-weight:600;color:#6d7378;margin:0 0 10px;letter-spacing:.06em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+
+<p class="cap">清單檢視 · 建議版</p>
+
+<div class="phone">
+
+  <div class="top">
+    <div class="brand"><span class="mark"><i></i></span>Sync Worship</div>
+    <div style="display:flex;gap:6px;">
+      <button class="iconbtn" aria-label="分享">⤴</button>
+      <button class="iconbtn" aria-label="設定">⚙</button>
+    </div>
+  </div>
+
+  <div>
+    <span class="back">← 所有清單</span>
+    <div class="hdr">
+      <div style="min-width:0;">
+        <h1>20261114 青少年聚會</h1>
+        <p class="meta">2026年11月14日 · 週六 · 主領：西瓜、信恩</p>
+        <p class="desc">本週主題：成為祝福。會前 30 分鐘集合練歌，請自備耳機及水。</p>
+      </div>
+      <div class="hdr-actions">
+        <button class="btn-primary">開啟舞台模式</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="livebar">
+    <span class="ring"></span>
+    <span style="flex:1;min-width:0;">Live：我們高舉耶穌的名</span>
+    <span style="color:var(--muted-fg);font-size:11px;">昨天 15:42</span>
+  </div>
+
+  <div class="card">
+    <div class="search">⌕ 搜尋並加入詩歌…</div>
+  </div>
+
+  <div class="rows">
+
+    <div class="row is-live">
+      <span class="grab"><span class="g">⠿</span><span class="n">1</span></span>
+      <div class="body">
+        <div class="title-row">
+          <p class="t">我們高舉耶穌的名</p>
+          <span class="badge"><span class="dot"></span>LIVE</span>
+        </div>
+        <div class="keyrow">
+          <span class="chip on">C</span>
+          <span class="chip">C</span>
+          <span class="chip">Intro</span>
+          <span class="chip">動態 7</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="push is-live">◉ 播放中</button>
+        <button class="trash">🗑</button>
+      </div>
+    </div>
+
+    <div class="between"><span>接 Pad 鋪底</span></div>
+
+    <div class="row">
+      <span class="grab"><span class="g">⠿</span><span class="n">2</span></span>
+      <div class="body">
+        <div class="title-row"><p class="t">從心合一</p></div>
+        <div class="keyrow">
+          <span class="chip on">G</span>
+          <span class="chip">V1</span>
+          <span class="chip">C</span>
+          <span class="chip">動態 5</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="push">◉ 推送</button>
+        <button class="trash">🗑</button>
+      </div>
+    </div>
+
+    <div class="between"><span>無縫接歌</span></div>
+
+    <div class="row">
+      <span class="grab"><span class="g">⠿</span><span class="n">3</span></span>
+      <div class="body">
+        <div class="title-row"><p class="t">大山為我挪開</p></div>
+        <div class="keyrow">
+          <span class="chip on">D</span>
+          <span class="chip">V1</span>
+          <span class="chip">自由敬拜</span>
+          <span class="chip">動態 9</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="push">◉ 推送</button>
+        <button class="trash">🗑</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

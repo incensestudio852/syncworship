@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, LockKeyhole } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { BrandMark } from '@/components/BrandMark';
 
 type Card = {
   title: string;
@@ -84,13 +85,7 @@ function ShareView() {
     <div className="min-h-dvh bg-[var(--bg)] px-5 py-10">
       <div className="mx-auto w-full max-w-md">
         <div className="mb-5 flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--accent)] text-white">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18V6l10-2v12" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="16" cy="16" r="3" />
-            </svg>
-          </span>
+          <BrandMark size={36} />
           <div className="leading-tight">
             <p className="text-[15px] font-bold text-[var(--accent)]">Sync Worship</p>
             <p className="text-[11px] text-[var(--muted-fg)]">一同敬拜 · 同步睇譜</p>

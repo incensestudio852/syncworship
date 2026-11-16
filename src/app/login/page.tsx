@@ -2,7 +2,8 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Music2, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { BrandMark } from '@/components/BrandMark';
 import { useAuth } from '@/lib/auth';
 import { Button, Input, Label, Spinner } from '@/components/ui';
 
@@ -45,9 +46,7 @@ function LoginForm() {
         className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm"
       >
         <div className="mb-6 flex items-center gap-2.5">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--accent)] text-white">
-            <Music2 size={19} />
-          </span>
+          <BrandMark size={40} />
           <div>
             <h1 className="text-lg font-semibold leading-tight">Sync Worship</h1>
             <p className="text-xs text-[var(--muted-fg)]">詩歌庫與即時同步</p>
