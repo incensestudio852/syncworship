@@ -42,7 +42,11 @@ export function StageMetricsPill({
   // know before the song ends, so it belongs at the end of the same pill.
   const transition = transitionLabel(item.transition);
 
-  const rows = (item.flow ?? []).map((step) => ({
+  const rows = (item.flow ?? []).map((step, i) => ({
+    // `key` is unique per POSITION. Repeats of the same section carry identical
+    // label and dynamic, so keying on those produced duplicates — React then
+    // reused children between re-renders and the flow could paint extra rows.
+    key: `flow-${i}-${step.section}`,
     label: `${step.section}${step.count && step.count > 1 ? `x${step.count}` : ''}`,
     dynamic: step.dynamic ?? '',
     band: dynamicBand(step.dynamic),
@@ -155,7 +159,7 @@ export function StageMetricsPill({
               }}
             >
           {rows.map((r) => (
-            <span key={r.label + r.dynamic} className="flex w-full items-center gap-1 leading-tight">
+            <span key={r.key} className="flex w-full items-center gap-1 leading-tight">
               <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-[var(--muted-fg)]">
                 {r.label}
               </span>
