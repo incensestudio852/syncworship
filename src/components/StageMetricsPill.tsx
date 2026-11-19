@@ -61,6 +61,23 @@ export function StageMetricsPill({
   /** How many rows fit in the capped height — lets us say "5 / 11". */
   const [visible, setVisible] = useState(rows.length);
 
+  /**
+   * The flow always starts at its first row.
+   *
+   * The list is capped at 101px and scrolls, and the pill floats over the sheet
+   * so its scroll offset survives song changes. Left alone, a flow that had been
+   * scrolled showed a MIDDLE slice — e.g. "C C V1 C Interlude" of a song that
+   * actually starts "Intro V1 V1 C", which reads as a reordered flow and had
+   * been reported as one. Resetting on every flow change keeps the top row
+   * anchored to the first section sung.
+   */
+  const flowKey = rows.map((r) => r.label).join('|');
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = 0;
+  }, [flowKey]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -128,7 +145,7 @@ export function StageMetricsPill({
             <span className="flex w-full items-center justify-between leading-none">
               <span className="text-[9px] uppercase tracking-wide text-[var(--muted-fg)]">段落</span>
               <span className="font-mono text-[9px] text-[var(--muted-fg)]">
-                {visible} / {rows.length}
+                共 {rows.length} · 見 {visible}
               </span>
             </span>
           ) : null}
