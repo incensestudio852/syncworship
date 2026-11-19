@@ -58,8 +58,6 @@ export function StageMetricsPill({
    */
   const scrollRef = useRef<HTMLSpanElement | null>(null);
   const [overflowing, setOverflowing] = useState(false);
-  /** How many rows fit in the capped height — lets us say "5 / 11". */
-  const [visible, setVisible] = useState(rows.length);
 
   /**
    * The flow always starts at its first row.
@@ -81,17 +79,10 @@ export function StageMetricsPill({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    // Only whether it clips matters now: that drives the bottom fade and the
+    // 展開 hint. The exact visible-row count is no longer displayed.
     const measure = () => {
-      const more = el.scrollHeight - el.clientHeight > 2;
-      setOverflowing(more);
-      if (!more) {
-        setVisible(rows.length);
-        return;
-      }
-      // Row height is uniform, so one known row height gives the count.
-      const first = el.querySelector('span');
-      const rowH = first ? first.getBoundingClientRect().height : 0;
-      setVisible(rowH > 0 ? Math.max(1, Math.floor(el.clientHeight / rowH)) : rows.length);
+      setOverflowing(el.scrollHeight - el.clientHeight > 2);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -143,9 +134,9 @@ export function StageMetricsPill({
               whole song. */}
           {overflowing ? (
             <span className="flex w-full items-center justify-between leading-none">
-              <span className="text-[9px] uppercase tracking-wide text-[var(--muted-fg)]">段落</span>
+              <span className="text-[9px] uppercase tracking-wide text-[var(--muted-fg)]">展開</span>
               <span className="font-mono text-[9px] text-[var(--muted-fg)]">
-                共 {rows.length} · 見 {visible}
+                共{rows.length} 段
               </span>
             </span>
           ) : null}
