@@ -313,14 +313,6 @@ export function insertChordBlock(
   return { text: next, caret: before.length + lead.length + CHORD_BLOCK_FENCE.length + 1 };
 }
 
-/** True when the caret sits inside a ```` ```chords ```` block. */
-export function insideChordBlock(text: string, caret: number): boolean {
-  const upTo = text.slice(0, caret);
-  const opens = (upTo.match(/```chords/gi) ?? []).length;
-  const closes = (upTo.match(/```(?!chords)/gi) ?? []).length;
-  return opens > closes;
-}
-
 /**
  * Convert an inline `[G]lyrics` passage into a chord-aligned block.
  *
