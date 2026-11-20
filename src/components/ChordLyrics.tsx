@@ -113,7 +113,7 @@ export function ChordLyrics({
           return (
             <div key={i} className="my-2 overflow-x-auto rounded-lg bg-[var(--soft)]/40 px-3 py-2">
               <pre className="whitespace-pre font-mono text-[12.5px] leading-[1.5] text-[var(--fg)]">
-                {showChords ? b.lines.join('\n') : b.lines.filter(isChordOnlyLine).join('\n')}
+                {showChords ? b.lines.join('\n') : b.lines.filter((l) => !isChordOnlyLine(l)).join('\n')}
               </pre>
             </div>
           );

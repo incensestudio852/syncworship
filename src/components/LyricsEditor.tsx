@@ -7,7 +7,6 @@ import {
   insertChordAt,
   insertChordBlock,
   insertSectionAt,
-  inlineToChordBlock,
   removeChordBeforeCaret,
   selectionRectInTextarea,
 } from '@/lib/chordEntry';
@@ -98,17 +97,6 @@ export function LyricsEditor({
     commit(insertChordBlock(value, start, end));
   }, [value, commit]);
 
-  /** Convert the selected lines from `[G]words` into an aligned block. */
-  const convertToBlock = useCallback(() => {
-    const el = elRef.current;
-    if (!el || el.selectionStart === el.selectionEnd) return;
-    const s = el.selectionStart;
-    const e = el.selectionEnd;
-    const converted = inlineToChordBlock(value.slice(s, e));
-    const next = value.slice(0, s) + converted + value.slice(e);
-    commit({ text: next, caret: s + converted.length });
-  }, [value, commit]);
-
   const syncSelection = useCallback(() => {
     const el = elRef.current;
     if (!el) return;
@@ -148,17 +136,10 @@ export function LyricsEditor({
         <span>選取文字可直接加上和弦。</span>
         <button
           type="button"
-          onClick={convertToBlock}
-          className="underline underline-offset-2 hover:text-[var(--accent)]"
-        >
-          選取行 → 轉為對齊區塊
-        </button>
-        <button
-          type="button"
           onClick={applyBlock}
           className="underline underline-offset-2 hover:text-[var(--accent)]"
         >
-          插入和弦區塊
+          或插入和弦區塊
         </button>
       </div>
 
