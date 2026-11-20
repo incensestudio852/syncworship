@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { SECTION_MARKERS, chordsForKey } from '@/lib/chordEntry';
 import { KEY_OPTIONS, keyLabel } from '@/lib/setlist';
@@ -8,10 +8,16 @@ import { KEY_OPTIONS, keyLabel } from '@/lib/setlist';
 /**
  * Mobile chord toolbar.
  *
- * Sits directly above the lyrics field, because the keyboard occupies the lower
- * half of the screen: anything below the field is unreachable without scrolling.
- * Compact by necessity — one scrollable row of chords rather than a wrapping
- * grid, so the field keeps its height.
+ * It lives above the lyrics field AND pins to the top of the on-screen keyboard
+ * while the field has focus. Without the pin it scrolls away the moment the
+ * keyboard opens — which is exactly when it is needed.
+ *
+ * The pin uses visualViewport rather than a fixed offset: the keyboard's height
+ * differs between iOS, Android, and portrait/landscape, and reading it is the
+ * only way to sit flush without guessing.
+ *
+ * Compact by necessity — two scrollable rows rather than wrapping grids, so the
+ * field keeps its height.
  */
 export function ChordToolbar({
   initialKey,
@@ -27,8 +33,34 @@ export function ChordToolbar({
   const [key, setKey] = useState(initialKey || 'G');
   const chords = useMemo(() => chordsForKey(key), [key]);
 
+  /** Keyboard height in px; 0 when closed. Drives the pinned offset. */
+  const [kbHeight, setKbHeight] = useState(0);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const onResize = () => {
+      // The keyboard is open when the visual viewport is meaningfully shorter
+      // than the layout viewport; the difference IS its height.
+      const kb = Math.max(0, window.innerHeight - vv.height);
+      setKbHeight(kb > 120 ? kb : 0);
+    };
+    vv.addEventListener('resize', onResize);
+    onResize();
+    return () => vv.removeEventListener('resize', onResize);
+  }, []);
+
   return (
-    <div className="mb-1.5 space-y-1 lg:hidden">
+    <div
+      className={
+        kbHeight
+          // Pinned: sits directly on top of the keyboard.
+          ? 'fixed inset-x-0 z-30 space-y-1 border-t border-[var(--border)] bg-[var(--card)]/97 px-2 pt-1.5 backdrop-blur lg:hidden'
+          : 'mb-1.5 space-y-1 lg:hidden'
+      }
+      style={kbHeight ? { bottom: kbHeight } : undefined}
+    >
     <div className="flex items-center gap-1.5">
       <label className="relative shrink-0">
         <select

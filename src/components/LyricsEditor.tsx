@@ -9,7 +9,6 @@ import {
   insertSectionAt,
   inlineToChordBlock,
   removeChordBeforeCaret,
-  SECTION_MARKERS,
   selectionRectInTextarea,
 } from '@/lib/chordEntry';
 import { ChordPanel } from '@/components/ChordPanel';
@@ -24,12 +23,15 @@ import { Label } from '@/components/ui';
  * tooling lived in one of them and not the other. Keeping the field in one
  * component is what stops that drift: a feature added here appears in both.
  *
- * Chord entry has four routes, deliberately:
+ * Chord entry has three routes, deliberately:
  *  1. Desktop panel beside the field — pick the key once, click chords.
  *  2. Mobile toolbar above the field — the keyboard covers anything below.
  *  3. Selection bubble — put a chord on a word already written.
- *  4. Typing `[` — a chip row appears, so the hands stay on the keyboard.
  * Plus the ```chords block for charts that need two chords over one word.
+ *
+ * A `[`-triggered chip row was tried and removed: a bar that appears and
+ * vanishes as you type makes the field jump, and the always-present toolbar
+ * above the field is reachable without moving the hands anyway.
  */
 export function LyricsEditor({
   value,
@@ -46,8 +48,6 @@ export function LyricsEditor({
   const elRef = useRef<HTMLTextAreaElement | null>(null);
   const [selAnchor, setSelAnchor] = useState<{ x: number; y: number } | null>(null);
   const [currentChord, setCurrentChord] = useState<string | null>(null);
-  /** Chips shown after the user types `[`. */
-  const [bracket, setBracket] = useState<{ at: number } | null>(null);
 
   const chords = useMemo(() => chordsForKey(songKey || 'G'), [songKey]);
 
@@ -56,7 +56,6 @@ export function LyricsEditor({
     (next: { text: string; caret: number }) => {
       onChange(next.text);
       setSelAnchor(null);
-      setBracket(null);
       requestAnimationFrame(() => {
         const node = elRef.current;
         if (!node) return;
@@ -123,24 +122,6 @@ export function LyricsEditor({
     setSelAnchor(rect ? { x: rect.right, y: rect.top } : null);
   }, [value]);
 
-  /**
-   * `[` opens a chip row at the caret.
-   *
-   * Detected on input rather than keydown so IME composition (which is how CJK
-   * is typed) does not fight it: compositionend lands as a normal input event.
-   */
-  const onInput = useCallback(
-    (raw: string) => {
-      const el = elRef.current;
-      onChange(raw);
-      if (!el) return;
-      const caret = el.selectionStart;
-      const justWrapped = /\[\s*$/.test(raw.slice(0, caret));
-      setBracket(justWrapped ? { at: caret } : null);
-    },
-    [onChange],
-  );
-
   return (
     <div>
       <Label>歌詞（可含和弦 [G]　段落 [Verse] 標籤　或 ```chords 區塊）</Label>
@@ -152,54 +133,10 @@ export function LyricsEditor({
         onInsertBlock={applyBlock}
       />
 
-      {/* Chip row: appears while the caret follows a typed `[`. */}
-      {bracket ? (
-        <div className="mb-1.5 flex gap-1 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--soft)]/60 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {chords.slice(0, 8).map((c) => (
-            <button
-              key={c}
-              type="button"
-              // The `[` is already in the text, so the chip supplies only the
-              // name and the closing bracket.
-              onClick={() => {
-                const at = bracket.at;
-                const next = value.slice(0, at) + `${c}]` + value.slice(at);
-                commit({ text: next, caret: at + c.length + 1 });
-              }}
-              className="shrink-0 rounded-full bg-[var(--card)] px-2.5 py-1 font-mono text-[12px] font-semibold text-[var(--fg)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
-            >
-              {c}
-            </button>
-          ))}
-          {SECTION_MARKERS.slice(1, 6).map((sec) => (
-            <button
-              key={sec.label}
-              type="button"
-              onClick={() => {
-                const at = bracket.at;
-                const next = value.slice(0, at) + `${sec.label}]` + value.slice(at);
-                commit({ text: next, caret: at + sec.label.length + 1 });
-              }}
-              className="shrink-0 rounded-full bg-[var(--card)] px-2.5 py-1 text-[11.5px] text-[var(--muted-fg)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
-            >
-              {sec.shown}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setBracket(null)}
-            aria-label="收起"
-            className="shrink-0 rounded-full px-2 py-1 text-[11px] text-[var(--muted-fg)]"
-          >
-            ✕
-          </button>
-        </div>
-      ) : null}
-
       <textarea
         ref={elRef}
         value={value}
-        onChange={(e) => onInput(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         onSelect={syncSelection}
         onKeyUp={syncSelection}
         rows={rows}
