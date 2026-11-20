@@ -45,6 +45,8 @@ export function LyricsEditor({
   rows?: number;
 }) {
   const elRef = useRef<HTMLTextAreaElement | null>(null);
+  /** Latest syncSelection, so the document listener need not re-bind. */
+  const syncSelectionRef = useRef<() => void>(() => {});
   const [selAnchor, setSelAnchor] = useState<{ x: number; y: number } | null>(null);
   const [currentChord, setCurrentChord] = useState<string | null>(null);
 
@@ -97,6 +99,21 @@ export function LyricsEditor({
     commit(insertChordBlock(value, start, end));
   }, [value, commit]);
 
+  /**
+   * Selection can change without `onSelect` firing — notably on a mouse drag in
+   * Safari, and on iOS when the selection handles are moved. `selectionchange`
+   * on the document is the dependable signal, so it drives the bubble instead.
+   */
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const el = elRef.current;
+      if (!el || document.activeElement !== el) return;
+      syncSelectionRef.current();
+    };
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+  }, []);
+
   const syncSelection = useCallback(() => {
     const el = elRef.current;
     if (!el) return;
@@ -110,8 +127,11 @@ export function LyricsEditor({
     setSelAnchor(rect ? { x: rect.right, y: rect.top } : null);
   }, [value]);
 
+  syncSelectionRef.current = syncSelection;
+
   return (
-    <div>
+    <div className="flex items-start gap-4">
+      <div className="min-w-0 flex-1">
       <Label>歌詞（可含和弦 [G]　段落 [Verse] 標籤　或 ```chords 區塊）</Label>
 
       <ChordToolbar
@@ -142,6 +162,16 @@ export function LyricsEditor({
           或插入和弦區塊
         </button>
       </div>
+      </div>
+
+      {/* Desktop: panel beside the field, so chords never cover the lyrics.
+          Hidden below lg, where the toolbar above the field takes over. */}
+      <ChordPanel
+        initialKey={songKey || 'G'}
+        onInsert={(c) => applyChord(c)}
+        onInsertSection={applySection}
+        onInsertBlock={applyBlock}
+      />
 
       {selAnchor ? (
         <ChordSelectionBubble
