@@ -428,10 +428,12 @@ export default function SongDetailPage() {
               Chinese script (simplified vs traditional) are both unreliable. */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-[11px] text-[var(--muted-fg)]">歌詞</span>
-            <Button variant="secondary" onClick={() => setLookupOpen(true)}>
+            {/* `primary` is the Action role here — the filled accent button.
+                There is no separate "action" variant in ui.tsx. */}
+            <Button variant="primary" onClick={() => setLookupOpen(true)}>
               <Music2 size={14} />
               搜尋歌詞
-              <span className="rounded-full bg-[var(--accent-soft)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--accent)]">
+              <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
                 實驗
               </span>
             </Button>
