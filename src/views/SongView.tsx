@@ -12,6 +12,7 @@ import { ConnectionBanner } from '@/components/ConnectionBanner';
 import { useRealtimeChannel, type ConnStatus } from '@/hooks/useRealtimeChannel';
 import { Button, Spinner } from '@/components/ui';
 import { hasChords } from '@/lib/chords';
+import { transposeKey, transposeLyrics } from '@/lib/transpose';
 
 export default function SongViewPage() {
   const search = useSearchParams();
@@ -20,6 +21,14 @@ export default function SongViewPage() {
   const { sheets, urls, loading: sheetsLoading } = useSongSheets(id, true);
   const dark = useIsDark();
   const [showChords, setShowChords] = useState(true);
+  /**
+   * Transpose offset, in semitones.
+   *
+   * View mode is a reading surface, so the same control as stage's lyric view
+   * belongs beside the key: a singer checking a song before the service wants
+   * to hear it in their key, and going to stage mode to do that is a detour.
+   */
+  const [offset, setOffset] = useState(0);
   const [view, setView] = useState<'sheet' | 'lyrics'>('sheet');
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -47,6 +56,18 @@ export default function SongViewPage() {
   const paths = sheets.map((s) => s.file_url);
   const hasSheet = paths.length > 0;
   const mode = hasSheet ? view : 'lyrics';
+
+  /**
+   * Sounding key and transposed lyrics, derived exactly as stage does.
+   *
+   * Deliberately NOT useMemo: this sits after the `!song` early return, and a
+   * hook there would change hook order between the loading and loaded renders.
+   * Transposing a lyric string is cheap enough not to cache.
+   */
+  const baseKey = song.original_key ?? '';
+  const sungKey = baseKey ? transposeKey(baseKey, offset) : '';
+  const rawLyrics = song.lyrics ?? '';
+  const displayLyrics = offset ? transposeLyrics(rawLyrics, offset, sungKey) : rawLyrics;
 
   return (
     <div className={fullscreen ? 'fixed inset-0 z-50 flex flex-col bg-[var(--bg)]' : 'space-y-4'}>
@@ -92,9 +113,53 @@ export default function SongViewPage() {
 
       {mode === 'lyrics' ? (
         <div className="mx-auto max-w-2xl px-1 pb-10">
-          <h1 className="text-xl font-semibold">{song.title}</h1>
+          {/* Same layout as the stage lyric view: title, then the key group
+              (sounding key, the original it came from, and the stepper). */}
+          <div className="flex items-center gap-2.5">
+            <h1 className="min-w-0 flex-1 truncate text-xl font-semibold">{song.title}</h1>
+
+            {sungKey ? (
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="rounded-md bg-[var(--soft)] px-2 py-0.5 font-mono text-sm font-semibold text-[var(--accent)]">
+                  {sungKey}
+                </span>
+                {offset !== 0 ? (
+                  <span className="font-mono text-[11px] text-[var(--muted-fg)]">{baseKey}</span>
+                ) : null}
+
+                <div className="flex items-center rounded-lg border border-[var(--border)]">
+                  <button
+                    onClick={() => setOffset((v) => v - 1)}
+                    aria-label="降半音"
+                    className="grid h-8 w-8 place-items-center rounded-l-lg text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--accent)]"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-7 text-center font-mono text-[11px] tabular-nums text-[var(--muted-fg)]">
+                    {offset > 0 ? `+${offset}` : offset}
+                  </span>
+                  <button
+                    onClick={() => setOffset((v) => v + 1)}
+                    aria-label="升半音"
+                    className="grid h-8 w-8 place-items-center rounded-r-lg text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--accent)]"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {offset !== 0 ? (
+                  <button
+                    onClick={() => setOffset(0)}
+                    className="rounded-full px-1.5 py-0.5 text-[11px] text-[var(--muted-fg)] underline underline-offset-2 hover:text-[var(--accent)]"
+                  >
+                    還原
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
           <div className="mb-3 mt-1 flex items-center gap-2 text-xs text-[var(--muted-fg)]">
-            {song.original_key ? <span className="font-mono">原調 {song.original_key}</span> : null}
             {hasChords(song.lyrics) ? (
               <button
                 onClick={() => setShowChords((v) => !v)}
@@ -104,7 +169,7 @@ export default function SongViewPage() {
               </button>
             ) : null}
           </div>
-          <ChordLyrics lyrics={song.lyrics} showChords={showChords} className="text-[15px]" />
+          <ChordLyrics lyrics={displayLyrics} showChords={showChords} className="text-[15px]" />
         </div>
       ) : sheetsLoading && !urls.size ? (
         <div className="flex items-center gap-2 py-12 text-sm text-[var(--muted-fg)]">
