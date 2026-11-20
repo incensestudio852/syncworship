@@ -29,6 +29,10 @@ import { Label } from '@/components/ui';
  *  3. Selection bubble — put a chord on a word already written.
  * Plus the ```chords block for charts that need two chords over one word.
  *
+ * Typing `[` auto-completes to `[]` with the caret between them, so a chord
+ * never needs its closing bracket typed. If a `]` already follows, nothing is
+ * added — the existing one is reused rather than producing `[][]`.
+ *
  * A `[`-triggered chip row was tried and removed: a bar that appears and
  * vanishes as you type makes the field jump, and the always-present toolbar
  * above the field is reachable without moving the hands anyway.
@@ -109,6 +113,64 @@ export function LyricsEditor({
     commit({ text: next, caret: s + converted.length });
   }, [value, commit]);
 
+  /**
+   * Typing `[` completes it to `[]` with the caret inside.
+   *
+   * Chords are the common case, so the closing bracket is never worth a
+   * keystroke. Two guards keep it from being annoying:
+   *  - Only fires on a single typed `[` (not paste, not deletion).
+   *  - If the character ALREADY after the caret is `]`, no bracket is added and
+   *    the caret simply steps over it — otherwise `[[]]` appears.
+   */
+  const handleChange = useCallback(
+    (el: HTMLTextAreaElement) => {
+      const next = el.value;
+      const caret = el.selectionStart;
+      const prev = value;
+
+      const typed = next.length === prev.length + 1 && next.slice(0, caret).endsWith('[');
+      if (!typed) {
+        onChange(next);
+        return;
+      }
+
+      // The character that will sit AFTER the newly typed `[`.
+      //
+      // After typing, the `[` occupies index `caret - 1`, so the next char is
+      // at `caret`. (Using `caret + 1` reads one past it — with "x[]" and a
+      // `[` typed at index 1 the text is "x[[]", where index `caret` is the
+      // pre-existing `[` and the `]` is one further along.)
+      // Scan the run of `[` characters right after the typed one, then look at
+      // what follows it. Typing `[` before an existing `[` leaves the `]` two
+      // characters along ("[[]"), not one, so checking a single index missed it
+      // and produced `[][]`.
+      let scan = caret;
+      while (next[scan] === '[') scan += 1;
+      const charAfter = next[scan];
+
+      // A `]` already follows, so this bracket can reuse it.
+      if (charAfter === ']') {
+        onChange(next);
+        requestAnimationFrame(() => {
+          const node = elRef.current;
+          if (node) node.setSelectionRange(caret, caret);
+        });
+        return;
+      }
+
+      const withClose = next.slice(0, caret) + ']' + next.slice(caret);
+      onChange(withClose);
+      requestAnimationFrame(() => {
+        const node = elRef.current;
+        if (!node) return;
+        node.focus();
+        // Caret sits BETWEEN the brackets so the chord name types inside.
+        node.setSelectionRange(caret, caret);
+      });
+    },
+    [value, onChange],
+  );
+
   const syncSelection = useCallback(() => {
     const el = elRef.current;
     if (!el) return;
@@ -136,11 +198,11 @@ export function LyricsEditor({
       <textarea
         ref={elRef}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => handleChange(e.target)}
         onSelect={syncSelection}
         onKeyUp={syncSelection}
         rows={rows}
-        placeholder={'和弦寫在音節前：[G]奇異恩典 [C]何等甘[G]甜\n或輸入 [ 直接選和弦；```chords 可做對齊區塊'}
+        placeholder={'和弦寫在音節前：[G]奇異恩典 [C]何等甘[G]甜\n輸入 [ 會自動補上 ]，直接打和弦名即可'}
         className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 font-mono text-[13px] leading-relaxed outline-none focus:border-[var(--accent)]"
       />
 
