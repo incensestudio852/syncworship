@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Music2, Search, X } from 'lucide-react';
+import { Languages, Music2, Search, X } from 'lucide-react';
 import { Label, Input, Button, Spinner } from '@/components/ui';
 import { searchLyrics, type LrcLibHit } from '@/lib/lrclib';
 
@@ -30,6 +30,9 @@ export function LyricsLookupDialog({
   const [preview, setPreview] = useState<LrcLibHit | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Converted text for the current preview; null until the user asks. */
+  const [converted, setConverted] = useState<string | null>(null);
+  const [converting, setConverting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const run = useCallback(async (q: string) => {
@@ -55,6 +58,36 @@ export function LyricsLookupDialog({
   }, []);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  // Switching results discards any conversion: stale converted text must never
+  // be inserted against a different song.
+  useEffect(() => {
+    setConverted(null);
+  }, [preview?.id]);
+
+  /**
+   * Convert 簡→繁 on demand.
+   *
+   * opencc's cn2t dictionary is ~440 KB gzipped, so it is dynamically imported
+   * here rather than bundled into the page: users who never press this button
+   * never download it. That is the whole reason this is a button and not an
+   * automatic conversion.
+   */
+  const convertToTraditional = useCallback(async () => {
+    if (!preview?.plainLyrics) return;
+    setConverting(true);
+    try {
+      const { Converter } = await import('opencc-js/cn2t');
+      const conv = Converter({ from: 'cn', to: 'tw' });
+      setConverted(conv(preview.plainLyrics));
+    } catch {
+      setError('簡繁轉換載入失敗，請檢查網絡後再試。');
+    } finally {
+      setConverting(false);
+    }
+  }, [preview?.plainLyrics]);
+
+  const shown = converted ?? preview?.plainLyrics ?? null;
 
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
@@ -138,8 +171,8 @@ export function LyricsLookupDialog({
 
           <div className="flex min-h-0 flex-col">
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
-              {preview?.plainLyrics ? (
-                <pre className="whitespace-pre-wrap font-sans text-[12.5px] leading-relaxed">{preview.plainLyrics}</pre>
+              {shown ? (
+                <pre className="whitespace-pre-wrap font-sans text-[12.5px] leading-relaxed">{shown}</pre>
               ) : (
                 <p className="text-[12px] text-[var(--muted-fg)]">選擇一首以預覽歌詞。</p>
               )}
@@ -148,16 +181,27 @@ export function LyricsLookupDialog({
               <p className="text-[11px] text-[var(--muted-fg)]">
                 {preview ? '使用後會覆寫目前的歌詞欄位。' : ''}
               </p>
-              <Button
-                variant="primary"
-                disabled={!preview?.plainLyrics}
-                onClick={() => {
-                  if (preview?.plainLyrics) onUse(preview.plainLyrics);
-                  onClose();
-                }}
-              >
-                使用這段歌詞
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={!preview?.plainLyrics || converting}
+                  onClick={() => void convertToTraditional()}
+                  title="需要時才下載字典"
+                >
+                  {converting ? <Spinner size={14} /> : <Languages size={14} />}
+                  {converted ? '已轉繁體' : '簡轉繁'}
+                </Button>
+                <Button
+                  variant="primary"
+                  disabled={!shown}
+                  onClick={() => {
+                    if (shown) onUse(shown);
+                    onClose();
+                  }}
+                >
+                  使用這段歌詞
+                </Button>
+              </div>
             </div>
           </div>
         </div>
