@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { chordsForKey } from '@/lib/chordEntry';
+import { SECTION_MARKERS, chordsForKey } from '@/lib/chordEntry';
 import { KEY_OPTIONS, keyLabel } from '@/lib/setlist';
 
 /**
@@ -19,9 +19,13 @@ import { KEY_OPTIONS, keyLabel } from '@/lib/setlist';
 export function ChordPanel({
   initialKey,
   onInsert,
+  onInsertSection,
+  onInsertBlock,
 }: {
   initialKey: string;
   onInsert: (chord: string) => void;
+  onInsertSection: (label: string) => void;
+  onInsertBlock: () => void;
 }) {
   const [key, setKey] = useState(initialKey || 'G');
   const chords = useMemo(() => chordsForKey(key), [key]);
@@ -66,8 +70,34 @@ export function ChordPanel({
           ))}
         </div>
 
+        {/* Sections sit below the chords: they are used a handful of times per
+            song, while chords are used on almost every line. */}
+        <h3 className="mb-2 mt-3 border-t border-[var(--border)] pt-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--muted-fg)]">
+          段落
+        </h3>
+        <div className="flex flex-wrap gap-1">
+          {SECTION_MARKERS.map((sec) => (
+            <button
+              key={sec.label}
+              type="button"
+              onClick={() => onInsertSection(sec.label)}
+              className="min-h-[30px] rounded-full border border-[var(--border)] px-2.5 text-[11.5px] font-medium text-[var(--fg)] transition-colors hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+            >
+              {sec.shown}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={onInsertBlock}
+          className="mt-2 min-h-[30px] w-full rounded-full border border-dashed border-[var(--border)] px-2.5 text-[11.5px] font-medium text-[var(--muted-fg)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+        >
+          ```chords 區塊
+        </button>
+
         <p className="mt-3 border-t border-[var(--border)] pt-2 text-[10.5px] leading-relaxed text-[var(--muted-fg)]">
-          點一下和弦，插入到游標位置。
+          點一下插入到游標位置。段落標籤會自成一行。
         </p>
       </div>
     </aside>

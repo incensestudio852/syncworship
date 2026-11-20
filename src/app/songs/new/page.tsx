@@ -1,10 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChordPanel } from '@/components/ChordPanel';
-import { ChordToolbar } from '@/components/ChordToolbar';
-import { ChordSelectionBubble } from '@/components/ChordSelectionBubble';
-import { chordBeforeCaret, chordsForKey, insertChordAt, removeChordBeforeCaret } from '@/lib/chordEntry';
+import { LyricsEditor } from '@/components/LyricsEditor';
+import {
+  chordBeforeCaret,
+  chordsForKey,
+  insertChordAt,
+  insertSectionAt,
+  removeChordBeforeCaret,
+  selectionRectInTextarea,
+} from '@/lib/chordEntry';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import {
@@ -63,12 +68,6 @@ function NewSongForm() {
 
   const [lyrics, setLyrics] = useState('');
   const lyricsRef = useRef('');
-  /** The DOM textarea, so a chord can be inserted at the real caret. */
-  const lyricsEl = useRef<HTMLTextAreaElement | null>(null);
-  /** Viewport anchor for the selection bubble; null = hidden. */
-  const [selAnchor, setSelAnchor] = useState<{ x: number; y: number } | null>(null);
-  /** Chord currently attached before the caret, so the bubble can offer remove. */
-  const [currentChord, setCurrentChord] = useState<string | null>(null);
   // Mirrors of the text fields so async inference can fill only untouched ones.
   const titleRef = useRef('');
   const keyRef = useRef('');
@@ -473,72 +472,6 @@ function NewSongForm() {
     return null;
   }, [ocrState]);
 
-  /**
-   * Insert a chord at the caret (or selection start) of the lyrics field.
-   *
-   * Writes through `setLyrics` directly rather than dispatching an input event:
-   * the textarea is controlled, so replacing its value must go through React
-   * state or the next render would restore the old text. The caret is restored
-   * after the state flush so typing can continue immediately.
-   */
-  const applyChord = useCallback(
-    (chord: string | null, at?: { start: number; end: number }) => {
-      const el = lyricsEl.current;
-      const text = lyrics == null ? '' : lyrics;
-      const start = at?.start ?? el?.selectionStart ?? text.length;
-      const end = at?.end ?? el?.selectionEnd ?? start;
-
-      let next: { text: string; caret: number } | null = null;
-      if (chord === null) {
-        // Remove was requested: drop the token immediately before the caret.
-        next = removeChordBeforeCaret(text, start);
-        if (!next) return;
-      } else {
-        next = insertChordAt(text, start, end, chord);
-      }
-
-      lyricsTouched.current = true;
-      lyricsRef.current = next.text;
-      setLyrics(next.text);
-      setOcrUnconfirmed(false);
-      setHighlight((s) => {
-        const n = new Set(s);
-        n.delete('lyrics');
-        return n;
-      });
-      setSelAnchor(null);
-
-      requestAnimationFrame(() => {
-        const node = lyricsEl.current;
-        if (!node) return;
-        node.focus();
-        node.setSelectionRange(next!.caret, next!.caret);
-        setCurrentChord(chordBeforeCaret(next!.text, next!.caret));
-      });
-    },
-    [lyrics],
-  );
-
-  /**
-   * Show the chord bubble when text is selected.
-   *
-   * Anchored to the END of the selection, matching the reference: a bubble
-   * anchored to the start drifts away from the word on a long selection.
-   */
-  const syncSelectionBubble = useCallback(() => {
-    const el = lyricsEl.current;
-    if (!el) return;
-    const { selectionStart, selectionEnd } = el;
-    setCurrentChord(chordBeforeCaret(lyrics, selectionStart));
-    if (selectionStart === selectionEnd) {
-      setSelAnchor(null);
-      return;
-    }
-    // A textarea cannot give per-character rects, so approximate the selection
-    // end from its caret index: walk a mirror span is overkill for a bubble.
-    const rect = el.getBoundingClientRect();
-    setSelAnchor({ x: rect.right, y: rect.top });
-  }, [lyrics]);
 
 
   return (
@@ -815,46 +748,27 @@ function NewSongForm() {
 
       </Card>
 
-      <div className="flex items-start gap-4">
-        <Card className="min-w-0 flex-1 space-y-3.5 p-4">
+      <Card className="space-y-3.5 p-4">
+        <LyricsEditor
+          value={lyrics}
+          onChange={(next) => {
+            lyricsTouched.current = true;
+            lyricsRef.current = next;
+            setLyrics(next);
+            setOcrUnconfirmed(false);
+            setHighlight((s) => {
+              const n = new Set(s);
+              n.delete('lyrics');
+              return n;
+            });
+          }}
+          songKey={originalKey}
+          rows={12}
+        />
+
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>
-              歌詞（可含和弦 [G]　段落 [Verse] 標籤）
-            </Label>
-
-            {/* Mobile: chords live ABOVE the field, because the keyboard covers
-                everything below it. Desktop hides this and uses the side panel. */}
-            <ChordToolbar initialKey={originalKey} onInsert={(c) => applyChord(c)} />
-
-            <textarea
-              ref={lyricsEl}
-              value={lyrics}
-              onChange={(e) => {
-                lyricsTouched.current = true;
-                lyricsRef.current = e.target.value;
-                setLyrics(e.target.value);
-                setOcrUnconfirmed(false);
-                setHighlight((s) => {
-                  const n = new Set(s);
-                  n.delete('lyrics');
-                  return n;
-                });
-              }}
-              onSelect={syncSelectionBubble}
-              onKeyUp={syncSelectionBubble}
-              onBlur={() => setSelAnchor(null)}
-              rows={10}
-              placeholder={'和弦寫在音節前，例如：\n[G]奇異恩典 [C]何等甘[G]甜'}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 font-mono text-[13px] leading-relaxed outline-none focus:border-[var(--accent)]"
-            />
-            <p className="mt-1 text-[11px] text-[var(--muted-fg)]">
-              和弦語法：[G] 放在字前，舞台上可一鍵切換顯示或隱藏。選取文字可直接加上和弦。
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>作曲</Label>
+            <Label>作曲</Label>
             <Input value={composer} onChange={(e) => setComposer(e.target.value)} />
           </div>
           <div>
@@ -863,23 +777,18 @@ function NewSongForm() {
           </div>
         </div>
 
-          <div>
-            <Label>標籤</Label>
-            <Input
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="以逗號分隔，例如：敬拜, 聖誕, 快歌"
-            />
-            <p className="mt-1 text-[11px] text-[var(--muted-fg)]">
-              逗號或頓號皆可：敬拜, 聖誕、快歌
-            </p>
-          </div>
-        </Card>
-
-        {/* Desktop: chords sit beside the field, so scoring never covers the
-            lyrics. Hidden below lg, where the toolbar above the field takes over. */}
-        <ChordPanel initialKey={originalKey} onInsert={(c) => applyChord(c)} />
-      </div>
+        <div>
+          <Label>標籤</Label>
+          <Input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="以逗號分隔，例如：敬拜, 聖誕, 快歌"
+          />
+          <p className="mt-1 text-[11px] text-[var(--muted-fg)]">
+            逗號或頓號皆可：敬拜, 聖誕、快歌
+          </p>
+        </div>
+      </Card>
 
       <div className="sticky bottom-0 -mx-3 flex items-center gap-2 border-t border-[var(--border)] bg-[var(--bg)]/95 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:-mx-5 sm:px-5">
         <Link href="/songs/" className="flex-1 sm:flex-none">
@@ -898,17 +807,6 @@ function NewSongForm() {
                 : '儲存詩歌'}
         </Button>
       </div>
-
-      {/* Floating chord bubble over a text selection. */}
-      {selAnchor ? (
-        <ChordSelectionBubble
-          anchor={selAnchor}
-          chords={chordsForKey(originalKey || 'G')}
-          currentChord={currentChord}
-          onInsert={(c) => applyChord(c)}
-          onClose={() => setSelAnchor(null)}
-        />
-      ) : null}
 
       {/* page preview */}
       {previewIndex !== null ? (

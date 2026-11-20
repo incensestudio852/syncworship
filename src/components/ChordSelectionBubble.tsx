@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CircleSlash, Link2, Repeat2, X } from 'lucide-react';
 
 /**
@@ -47,9 +47,25 @@ export function ChordSelectionBubble({
     // Right-align to the selection, then clamp into [8, vw - w - 8].
     const left = Math.min(Math.max(8, anchor.x - w), Math.max(8, vw - w - 8));
     // Sit ABOVE the text: subtract the real height plus a small gap.
+    // 10px gap so the bubble never touches the glyphs it sits over.
     const top = Math.max(8, anchor.y - h - 10);
     setPos({ left, top });
   }, [anchor, showAll]);
+
+  /**
+   * Dismiss on any pointer press outside the bubble.
+   *
+   * This replaces relying on the textarea's blur, which fired before the tap
+   * could register and tore the bubble down mid-click.
+   */
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    // Capture so it runs before the textarea's own handlers.
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, [onClose]);
 
   // Show four chords inline (the common ones), then the rest on demand — the
   // bubble has to stay narrow enough to sit over a phone-width selection.

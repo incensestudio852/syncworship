@@ -146,15 +146,19 @@ export function insertChordAt(
   chord: string,
 ): { text: string; caret: number } {
   const token = `[${chord}]`;
-  // Inserting at the start of a selection keeps the lyric under the chord,
-  // which is how the stage renderer reads it.
-  const at = start;
-  const before = text.slice(0, at);
+  const before = text.slice(0, start);
+  // The selection is KEPT, not swallowed: a chord annotates the syllable that
+  // follows it, so it goes in front of the selected text. Slicing from `end`
+  // deleted the very word the user had selected.
+  const selected = text.slice(start, end);
   const after = text.slice(end);
-  // A space before the bracket keeps `[G]` from gluing onto the previous word.
-  const pad = before && !/\s$/.test(before) && !before.endsWith(']') ? ' ' : '';
-  const next = before + pad + token + after;
-  return { text: next, caret: at + pad.length + token.length };
+  // No space is inserted: `[G]奇異恩典` is the syntax the parser expects, and a
+  // leading space pushed chords off the syllable they annotate.
+  const pad = '';
+  const next = before + pad + token + selected + after;
+  // Caret lands after the inserted chord but BEFORE the kept selection, so the
+  // next chord can be typed straight away without re-selecting.
+  return { text: next, caret: before.length + pad.length + token.length };
 }
 
 /** The chord immediately before the caret, if the caret sits after `]`. */
@@ -174,4 +178,177 @@ export function removeChordBeforeCaret(
   if (!m) return null;
   const start = caret - m[0].length;
   return { text: text.slice(0, start) + text.slice(caret), caret: start };
+}
+
+/**
+ * Viewport rect of a character range inside a <textarea>.
+ *
+ * A textarea exposes no API for this, so the standard technique is a hidden
+ * mirror: a div laid out with the SAME font, padding and width, into which the
+ * text up to `end` is copied and a marker span is measured. The marker's rect,
+ * offset back by the textarea's own position, is where that character sits on
+ * screen.
+ *
+ * Without this the bubble anchored to the textarea's corner and floated far
+ * from the selected word, which is what it looked like in practice.
+ */
+export function selectionRectInTextarea(
+  el: HTMLTextAreaElement,
+  start: number,
+  end: number,
+): DOMRect | null {
+  const cs = window.getComputedStyle(el);
+  const rect = el.getBoundingClientRect();
+
+  const mirror = document.createElement('div');
+  const props = [
+    'boxSizing', 'width', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth',
+    'borderLeftWidth', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+    'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight',
+    'wordSpacing', 'textTransform', 'textIndent',
+  ] as const;
+  for (const p of props) {
+    mirror.style[p] = cs[p] as string;
+  }
+  mirror.style.position = 'absolute';
+  mirror.style.visibility = 'hidden';
+  mirror.style.top = '0';
+  mirror.style.left = '-9999px';
+  mirror.style.height = 'auto';
+  mirror.style.overflow = 'hidden';
+  mirror.style.whiteSpace = 'pre-wrap';
+  mirror.style.wordWrap = 'break-word';
+
+  // Everything before the selection, then a marker at the selection END —
+  // anchoring to the end keeps the bubble beside the word rather than behind it.
+  const before = el.value.slice(0, end);
+  mirror.textContent = before;
+
+  const marker = document.createElement('span');
+  // Zero-width but measurable, and it forces its own line box if at a wrap.
+  marker.textContent = el.value.slice(end, end + 1) || '.';
+  mirror.appendChild(marker);
+
+  document.body.appendChild(mirror);
+  const mRect = marker.getBoundingClientRect();
+  const mBox = mirror.getBoundingClientRect();
+  document.body.removeChild(mirror);
+
+  // Translate into viewport coordinates. Subtract scroll so a scrolled textarea
+  // reports where the text is actually visible.
+  const top = rect.top + (mRect.top - mBox.top) - el.scrollTop;
+  const right = rect.left + (mRect.right - mBox.left);
+
+  if (!Number.isFinite(top) || !Number.isFinite(right)) return null;
+  return new DOMRect(right, top, 0, mRect.height || parseFloat(cs.lineHeight) || 18);
+}
+
+/**
+ * Section markers the editor offers.
+ *
+ * These are written as bare `[Verse]` lines rather than `[G]`-style chords: the
+ * stage parser recognises them as section labels and renders a chip. The labels
+ * match the ones parseSection() already understands, so nothing downstream
+ * needs to change.
+ */
+export const SECTION_MARKERS = [
+  { label: 'Intro', shown: 'Intro' },
+  { label: 'Verse', shown: 'Verse' },
+  { label: 'Pre-Chorus', shown: 'Pre-C' },
+  { label: 'Chorus', shown: 'Chorus' },
+  { label: 'Bridge', shown: 'Bridge' },
+  { label: 'Interlude', shown: 'Inter' },
+  { label: 'Tag', shown: 'Tag' },
+  { label: 'Outro', shown: 'Outro' },
+] as const;
+
+/**
+ * Insert a section marker on its own line at the caret.
+ *
+ * A section label only parses when it stands alone on a line, so leading and
+ * trailing newlines are added when the caret is mid-text. Putting `[Chorus]`
+ * inline with lyrics would be treated as a chord-like token and silently fail
+ * to register as a section.
+ */
+export function insertSectionAt(
+  text: string,
+  caret: number,
+  label: string,
+): { text: string; caret: number } {
+  const before = text.slice(0, caret);
+  const after = text.slice(caret);
+  const lead = before.length === 0 || before.endsWith('\n') ? '' : '\n';
+  const trail = after.length === 0 || after.startsWith('\n') ? '\n' : '\n';
+  const token = `[${label}]`;
+  const next = before + lead + token + trail + after;
+  return { text: next, caret: (before + lead + token).length };
+}
+
+
+/**
+ * Chord-block syntax.
+ *
+ * A fenced ```` ```chords ```` block holds a monospaced grid where chord names
+ * sit ABOVE the lyric line they belong to, spaced by column. That is the only
+ * way to express two chords per word, which the inline `[G]` form cannot.
+ *
+ * Both forms coexist: inline for quick entry, the block for charts imported
+ * from elsewhere or where spacing carries meaning.
+ */
+export const CHORD_BLOCK_FENCE = '```chords';
+
+/** Wrap the caret in an empty chord block, or fill an existing one. */
+export function insertChordBlock(
+  text: string,
+  start: number,
+  end: number,
+): { text: string; caret: number } {
+  const before = text.slice(0, start);
+  const selected = text.slice(start, end);
+  const after = text.slice(end);
+  const lead = before.length === 0 || before.endsWith('\n') ? '' : '\n';
+  const body = selected || '\nAm        G\nKarma police';
+  const block = `${CHORD_BLOCK_FENCE}\n${body.replace(/^\n/, '')}\n\`\`\`\n`;
+  const next = before + lead + block + after;
+  return { text: next, caret: before.length + lead.length + CHORD_BLOCK_FENCE.length + 1 };
+}
+
+/** True when the caret sits inside a ```` ```chords ```` block. */
+export function insideChordBlock(text: string, caret: number): boolean {
+  const upTo = text.slice(0, caret);
+  const opens = (upTo.match(/```chords/gi) ?? []).length;
+  const closes = (upTo.match(/```(?!chords)/gi) ?? []).length;
+  return opens > closes;
+}
+
+/**
+ * Convert an inline `[G]lyrics` passage into a chord-aligned block.
+ *
+ * Used by the "convert to block" action for charts the user typed inline but
+ * which need column alignment — typically two chords over one word.
+ */
+export function inlineToChordBlock(passage: string): string {
+  const lines = passage.split('\n');
+  const out: string[] = [];
+  for (const line of lines) {
+    const tokens = [...line.matchAll(/\[([^\]]+)\]/g)];
+    if (!tokens.length) {
+      out.push(line);
+      continue;
+    }
+    let chordRow = '';
+    let lyricRow = '';
+    let cursor = 0;
+    for (const t of tokens) {
+      const at = t.index ?? 0;
+      const plain = line.slice(cursor, at).replace(/\[/g, '');
+      lyricRow += plain;
+      // Pad the chord row so it sits exactly above its syllable.
+      chordRow = chordRow.padEnd(lyricRow.length, ' ') + t[1] + ' ';
+      cursor = at + t[0].length;
+    }
+    lyricRow += line.slice(cursor);
+    out.push(chordRow.trimEnd(), lyricRow);
+  }
+  return out.join('\n');
 }
