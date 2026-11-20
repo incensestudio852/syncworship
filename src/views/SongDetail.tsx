@@ -4,12 +4,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LyricsEditor } from '@/components/LyricsEditor';
+import { LyricsLookupDialog } from '@/components/LyricsLookupDialog';
 import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   Loader2,
+  Music2,
   Pencil,
   Plus,
   Save,
@@ -58,6 +60,7 @@ export default function SongDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [lookupOpen, setLookupOpen] = useState(false);
   const [form, setForm] = useState<Editable>(emptyEditable);
   const [saving, setSaving] = useState(false);
   const [dupOpen, setDupOpen] = useState(false);
@@ -413,6 +416,19 @@ export default function SongDetailPage() {
               </div>
             </div>
           </div>
+          {/* Experimental: pull lyrics from the LRCLIB community database.
+              Opens a picker rather than inserting directly, since coverage and
+              Chinese script (simplified vs traditional) are both unreliable. */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] text-[var(--muted-fg)]">歌詞</span>
+            <Button variant="secondary" onClick={() => setLookupOpen(true)}>
+              <Music2 size={14} />
+              搜尋歌詞
+              <span className="rounded-full bg-[var(--accent-soft)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--accent)]">
+                實驗
+              </span>
+            </Button>
+          </div>
           {/* Same editor as 新增詩歌: one component means the chord tooling
               cannot exist on one page and be missing on the other. */}
           <LyricsEditor
@@ -428,6 +444,14 @@ export default function SongDetailPage() {
               onChange={(e) => setForm({ ...form, tags: e.target.value.split(/[,，、]/) })}
             />
           </div>
+          {lookupOpen ? (
+            <LyricsLookupDialog
+              title={form.title ?? ''}
+              artist={form.composer ?? ''}
+              onUse={(lyrics) => setForm((f) => ({ ...f, lyrics }))}
+              onClose={() => setLookupOpen(false)}
+            />
+          ) : null}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setEditing(false)} disabled={saving}>
               取消
