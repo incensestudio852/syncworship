@@ -396,6 +396,22 @@ export default function SongDetailPage() {
                 onChange={(e) => setForm({ ...form, source: e.target.value })}
               />
             </div>
+            <div className="grid grid-cols-2 gap-3 sm:col-span-2">
+              <div>
+                <Label>作曲</Label>
+                <Input
+                  value={form.composer ?? ''}
+                  onChange={(e) => setForm({ ...form, composer: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>作詞</Label>
+                <Input
+                  value={form.lyricist ?? ''}
+                  onChange={(e) => setForm({ ...form, lyricist: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
           {/* Same editor as 新增詩歌: one component means the chord tooling
               cannot exist on one page and be missing on the other. */}
@@ -405,22 +421,6 @@ export default function SongDetailPage() {
             songKey={form.original_key ?? song?.original_key ?? ''}
             rows={14}
           />
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>作曲</Label>
-              <Input
-                value={form.composer ?? ''}
-                onChange={(e) => setForm({ ...form, composer: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>作詞</Label>
-              <Input
-                value={form.lyricist ?? ''}
-                onChange={(e) => setForm({ ...form, lyricist: e.target.value })}
-              />
-            </div>
-          </div>
           <div>
             <Label>標籤（逗號分隔）</Label>
             <Input

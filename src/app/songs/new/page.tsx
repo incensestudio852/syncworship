@@ -746,6 +746,17 @@ function NewSongForm() {
             />
         </Field>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>作曲</Label>
+            <Input value={composer} onChange={(e) => setComposer(e.target.value)} />
+          </div>
+          <div>
+            <Label>作詞</Label>
+            <Input value={lyricist} onChange={(e) => setLyricist(e.target.value)} />
+          </div>
+        </div>
+
       </Card>
 
       <Card className="space-y-3.5 p-4">
@@ -765,17 +776,6 @@ function NewSongForm() {
           songKey={originalKey}
           rows={12}
         />
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>作曲</Label>
-            <Input value={composer} onChange={(e) => setComposer(e.target.value)} />
-          </div>
-          <div>
-            <Label>作詞</Label>
-            <Input value={lyricist} onChange={(e) => setLyricist(e.target.value)} />
-          </div>
-        </div>
 
         <div>
           <Label>標籤</Label>
