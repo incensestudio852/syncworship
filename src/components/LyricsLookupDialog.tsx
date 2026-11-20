@@ -126,13 +126,24 @@ export function LyricsLookupDialog({
             <Label>關鍵字（歌名、歌手）</Label>
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="例：恩典之路 讚美之泉" />
           </div>
-          <Button type="submit" variant="primary" disabled={busy || !query.trim()}>
+          <Button type="submit" variant="primary" className="shrink-0 whitespace-nowrap" disabled={busy || !query.trim()}>
             {busy ? <Spinner size={15} /> : <Search size={15} />}
             搜尋
           </Button>
         </form>
 
-        <div className="grid min-h-0 flex-1 grid-rows-1 gap-0 overflow-hidden sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+        {/*
+          Mobile: the list sits above the preview, each with its own scroll
+          area. Desktop: side-by-side.
+
+          `grid-rows-1` was previously applied at every breakpoint, which put
+          BOTH children in a single grid row — on a phone that collapsed the
+          list to zero width, so only the lyrics pane was visible and no result
+          could be selected.
+        */}
+        <div
+          className="grid min-h-0 flex-1 grid-rows-[minmax(0,45%)_minmax(0,1fr)] gap-0 overflow-hidden sm:grid-rows-1 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)]"
+        >
           <div className="max-h-[30vh] overflow-y-auto border-b border-[var(--border)] sm:max-h-none sm:border-b-0 sm:border-r">
             {error ? (
               <p className="p-3 text-[12px] text-rose-600">{error}</p>
