@@ -120,6 +120,22 @@ export function keyDistance(from: string, to: string): number {
   return d;
 }
 
+/**
+ * The key a list item is actually played in: what the list says, else the
+ * library's original key.
+ *
+ * Every surface that shows a key (stage bar, song list, metrics pill) must use
+ * this, or the header says F while the chords underneath are still in G.
+ */
+export function listKey(item: {
+  selected_key?: string | null;
+  service_key?: string | null;
+  songs?: { original_key?: string | null } | null;
+} | null | undefined): string {
+  if (!item) return '';
+  return item.selected_key || item.service_key || item.songs?.original_key || '';
+}
+
 /** '1'..'7' for a pitch class relative to a key — Nashville-style, no letters. */
 const NASHVILLE = ['1', 'b2', '2', 'b3', '3', '4', 'b5', '5', 'b6', '6', 'b7', '7'];
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { LyricsEditor } from '@/components/LyricsEditor';
 import {
   ArrowLeft,
   ChevronDown,
@@ -394,15 +395,14 @@ export default function SongDetailPage() {
               />
             </div>
           </div>
-          <div>
-            <Label>歌詞（可含和弦 [G]　段落 [Verse] 標籤）</Label>
-            <textarea
-              value={form.lyrics ?? ''}
-              onChange={(e) => setForm({ ...form, lyrics: e.target.value })}
-              rows={14}
-              className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 font-mono text-[13px] leading-relaxed outline-none focus:border-[var(--accent)]"
-            />
-          </div>
+          {/* Same editor as 新增詩歌: one component means the chord tooling
+              cannot exist on one page and be missing on the other. */}
+          <LyricsEditor
+            value={form.lyrics ?? ''}
+            onChange={(next) => setForm({ ...form, lyrics: next })}
+            songKey={form.original_key ?? song?.original_key ?? ''}
+            rows={14}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>作曲</Label>

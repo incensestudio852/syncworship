@@ -1,6 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { LyricsEditor } from '@/components/LyricsEditor';
+import {
+  chordBeforeCaret,
+  chordsForKey,
+  insertChordAt,
+  insertSectionAt,
+  removeChordBeforeCaret,
+  selectionRectInTextarea,
+} from '@/lib/chordEntry';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import {
@@ -40,6 +49,7 @@ type ReadyPage = { blob: Blob; url: string; page: number };
 type Stage = 'idle' | 'rendering' | 'uploading' | 'saving';
 
 export default function NewSongPage() {
+
   return (
     <Suspense fallback={<div className="py-10 text-sm text-[var(--muted-fg)]">載入中…</div>}>
       <NewSongForm />
@@ -462,6 +472,8 @@ function NewSongForm() {
     return null;
   }, [ocrState]);
 
+
+
   return (
     <div className="space-y-5">
       <Link
@@ -737,31 +749,22 @@ function NewSongForm() {
       </Card>
 
       <Card className="space-y-3.5 p-4">
-        <div>
-          <Label>
-            歌詞（可含和弦 [G]　段落 [Verse] 標籤）
-          </Label>
-          <textarea
-            value={lyrics}
-            onChange={(e) => {
-              lyricsTouched.current = true;
-              lyricsRef.current = e.target.value;
-              setLyrics(e.target.value);
-              setOcrUnconfirmed(false);
-              setHighlight((s) => {
-                const n = new Set(s);
-                n.delete('lyrics');
-                return n;
-              });
-            }}
-            rows={10}
-            placeholder={'和弦寫在音節前，例如：\n[G]奇異恩典 [C]何等甘[G]甜'}
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 font-mono text-[13px] leading-relaxed outline-none focus:border-[var(--accent)]"
-          />
-          <p className="mt-1 text-[11px] text-[var(--muted-fg)]">
-            和弦語法：[G] 放在字前，舞台上可一鍵切換顯示或隱藏。
-          </p>
-        </div>
+        <LyricsEditor
+          value={lyrics}
+          onChange={(next) => {
+            lyricsTouched.current = true;
+            lyricsRef.current = next;
+            setLyrics(next);
+            setOcrUnconfirmed(false);
+            setHighlight((s) => {
+              const n = new Set(s);
+              n.delete('lyrics');
+              return n;
+            });
+          }}
+          songKey={originalKey}
+          rows={12}
+        />
 
         <div className="grid grid-cols-2 gap-3">
           <div>

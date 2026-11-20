@@ -39,7 +39,7 @@ import { Button } from '@/components/ui';
 import { IncomingPushBanner } from '@/components/IncomingPushBanner';
 import { StageMetricsPill } from '@/components/StageMetricsPill';
 import { StageMetricsPanel } from '@/components/StageMetricsPanel';
-import { transposeKey, transposeLyrics } from '@/lib/transpose';
+import { keyDistance, listKey, transposeKey, transposeLyrics } from '@/lib/transpose';
 
 type View = 'sheet' | 'lyrics';
 
@@ -277,27 +277,32 @@ export default function StagePage() {
   const current = items[index];
 
   /**
-   * Key actually being sung.
-   *
-   * service_key is what the leader chose for this service; the offset is a
-   * per-device nudge on top of it, so a stage can drop a semitone without
-   * changing what anyone else sees.
-   */
-  const serviceKey = current?.service_key ?? current?.songs?.original_key ?? '';
-  /**
    * The key of THIS SERVICE — what the user set in the list.
    *
    * Falls back to the library's original key for songs that were never given a
-   * service key. The transpose offset is shown separately (`→ C#`), so this
-   * value stays the one the user typed rather than drifting with auto-transpose.
+   * service key. Every key label on the stage reads this, so the bar, the song
+   * list and the lyrics header can never disagree.
    */
-  const songKey = current?.selected_key || current?.songs?.original_key || '';
-  const sungKey = serviceKey ? transposeKey(serviceKey, offset) : '';
+  const serviceKey = listKey(current);
+  /** The key the library's chords are actually written in. */
+  const originalKey = current?.songs?.original_key ?? serviceKey;
+  /**
+   * Semitones from the song's ORIGINAL key to the key the list asks for.
+   *
+   * The lyrics in the library are written in original_key; service_key is the
+   * key chosen for this service. Without this, a G song played in F rendered
+   * original chords (G C D Em) under an F header — the offset only ever moved
+   * when the leader touched the stepper.
+   */
+  const serviceOffset = useMemo(() => keyDistance(originalKey, serviceKey), [originalKey, serviceKey]);
+  /** Stepper value on top of the service key; 0 means "at the list key". */
+  const totalOffset = serviceOffset + offset;
+  const sungKey = serviceKey ? transposeKey(serviceKey, offset) : originalKey;
   const displayLyrics = useMemo(() => {
     const raw = current?.songs?.lyrics ?? '';
-    if (!offset) return raw;
-    return transposeLyrics(raw, offset, sungKey);
-  }, [current?.songs?.lyrics, offset, sungKey]);
+    if (!totalOffset) return raw;
+    return transposeLyrics(raw, totalOffset, sungKey);
+  }, [current?.songs?.lyrics, totalOffset, sungKey]);
 
   // A new song starts from its own key, not the previous song's transpose.
   //
@@ -520,13 +525,14 @@ export default function StagePage() {
 
                 {sungKey ? (
                   <div className="flex shrink-0 items-center gap-1.5">
-                    {/* Current sounding key, with the service key kept visible
-                        once transposed so the leader can see the shift. */}
+                    {/* Sounding key. The list key is what it shows at offset 0;
+                        once nudged, the key you left behind is echoed beside it
+                        so the leader can see the shift without doing arithmetic. */}
                     <span className="rounded-md bg-[var(--soft)] px-2 py-0.5 font-mono text-sm font-semibold text-[var(--accent)]">
                       {sungKey}
                     </span>
-                    {offset !== 0 && songKey ? (
-                      <span className="font-mono text-[11px] text-[var(--muted-fg)]">{songKey}</span>
+                    {offset !== 0 && serviceKey ? (
+                      <span className="font-mono text-[11px] text-[var(--muted-fg)]">{serviceKey}</span>
                     ) : null}
 
                     {/* Transpose stepper sits beside the key it changes, not in
@@ -613,7 +619,7 @@ export default function StagePage() {
         {current ? (
           <StageMetricsPill
             item={current}
-            songKey={current.selected_key || current.songs?.original_key || ''}
+            songKey={listKey(current)}
             hidden={metricsHidden}
             onToggleHidden={() => setMetricsHidden((v) => !v)}
             onOpenDetails={() => setDetailsOpen(true)}
@@ -671,9 +677,9 @@ export default function StagePage() {
                         {i + 1}
                       </span>
                       <span className="min-w-0 flex-1 truncate">{it.songs?.title}</span>
-                      {it.selected_key || it.songs?.original_key ? (
+                      {listKey(it) ? (
                         <span className="shrink-0 font-mono text-[10px] text-[var(--muted-fg)]">
-                          {it.selected_key || it.songs?.original_key}
+                          {listKey(it)}
                         </span>
                       ) : null}
                     </button>
@@ -730,9 +736,9 @@ export default function StagePage() {
               metrics panel just to read it. */}
           <p className="flex items-center justify-center gap-1.5 truncate text-sm font-medium">
             <span className="truncate">{current?.songs?.title ?? '清單沒有詩歌'}</span>
-            {songKey ? (
+            {serviceKey ? (
               <span className="shrink-0 rounded bg-[var(--soft)] px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--accent)]">
-                {songKey}
+                {sungKey || serviceKey}
               </span>
             ) : null}
           </p>
