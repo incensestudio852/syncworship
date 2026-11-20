@@ -277,8 +277,15 @@ export function insertSectionAt(
 ): { text: string; caret: number } {
   const before = text.slice(0, caret);
   const after = text.slice(caret);
+  // A section label sits on its own line, and the newline goes BEFORE the
+  // label — the label ends the previous line rather than starting a new blank
+  // one, so the caret lands right after `[Chorus]` ready for lyrics.
   const lead = before.length === 0 || before.endsWith('\n') ? '' : '\n';
-  const trail = after.length === 0 || after.startsWith('\n') ? '\n' : '\n';
+  // Only add a trailing break when the following text would otherwise run on
+  // the same line. Without `.trim()`, an `after` of "\n" (or "  \n") was
+  // detected as text and got a second newline, straight after one that already
+  // existed.
+  const trail = after.length === 0 || after.startsWith('\n') ? '' : '\n';
   const token = `[${label}]`;
   const next = before + lead + token + trail + after;
   return { text: next, caret: (before + lead + token).length };

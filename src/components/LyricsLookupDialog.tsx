@@ -91,7 +91,7 @@ export function LyricsLookupDialog({
 
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4">
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:rounded-2xl">
+      <div className="flex h-[92dvh] w-full max-w-2xl flex-col rounded-t-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] p-4">
           <div>
             <h3 className="flex items-center gap-1.5 text-[15px] font-bold">
@@ -142,9 +142,9 @@ export function LyricsLookupDialog({
           could be selected.
         */}
         <div
-          className="grid min-h-0 flex-1 grid-rows-[minmax(0,45%)_minmax(0,1fr)] gap-0 overflow-hidden sm:grid-rows-1 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)]"
+          className="grid min-h-0 flex-1 grid-rows-[minmax(0,50%)_minmax(0,1fr)] gap-0 overflow-hidden sm:grid-rows-1 sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)]"
         >
-          <div className="max-h-[30vh] overflow-y-auto border-b border-[var(--border)] sm:max-h-none sm:border-b-0 sm:border-r">
+          <div className="min-h-0 overflow-y-auto border-b border-[var(--border)] sm:border-b-0 sm:border-r">
             {error ? (
               <p className="p-3 text-[12px] text-rose-600">{error}</p>
             ) : hits === null ? (
