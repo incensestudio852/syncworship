@@ -322,7 +322,9 @@ export default function SongDetailPage() {
     );
   }
 
-  const chords = chordList(song.lyrics);
+  // Only whether chords exist matters now: the on-page chord inventory was
+  // removed as noise, so a boolean is enough for the toggle.
+  const chordCount = chordList(song.lyrics).length;
 
   return (
     <div className="space-y-5">
@@ -442,7 +444,7 @@ export default function SongDetailPage() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">歌詞</h2>
           <div className="flex items-center gap-2">
-            {chords.length ? (
+            {chordCount ? (
               <button
                 onClick={() => setShowChords((v) => !v)}
                 className={`flex min-h-[36px] items-center rounded-full px-3 text-[11px] font-medium transition-colors ${
@@ -453,11 +455,6 @@ export default function SongDetailPage() {
               >
                 和弦 {showChords ? '開' : '關'}
               </button>
-            ) : null}
-            {chords.length ? (
-              <span className="hidden font-mono text-[10px] text-[var(--muted-fg)] sm:inline">
-                {chords.join(' · ')}
-              </span>
             ) : null}
           </div>
         </div>
