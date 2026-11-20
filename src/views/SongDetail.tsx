@@ -28,8 +28,10 @@ import { convertChartToInline } from '@/lib/chartToInline';
 import { deleteSongWithFiles, removeSheetPages, uploadSheetPages } from '@/lib/storage';
 import { signPaths } from '@/lib/storage';
 import { chordList, hasChords } from '@/lib/chords';
+import { transposeKey, transposeLyrics } from '@/lib/transpose';
 import { Button, Card, Field, Input, Label, Spinner } from '@/components/ui';
 import { ChordLyrics } from '@/components/ChordLyrics';
+import { TransposeControl } from '@/components/TransposeControl';
 import { ImageLightbox } from '@/components/ImageLightbox';
 import { ConfirmDelete, ConfirmDialog } from '@/components/ConfirmDialogs';
 import { useToast } from '@/components/Toast';
@@ -73,6 +75,11 @@ export default function SongDetailPage() {
   const [delBusy, setDelBusy] = useState(false);
   const [pageToDelete, setPageToDelete] = useState<SongSheet | null>(null);
   const [showChords, setShowChords] = useState(true);
+  /**
+   * Transposition for the read-only lyrics. Local to the page like `showChords`
+   * — it is a viewing convenience, never written back to the song.
+   */
+  const [offset, setOffset] = useState(0);
   const objectUrls = useRef<string[]>([]);
 
   const load = useCallback(async () => {
@@ -468,6 +475,11 @@ export default function SongDetailPage() {
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold">歌詞</h2>
           <div className="flex items-center gap-2">
+            <TransposeControl
+              baseKey={song.original_key ?? ''}
+              offset={offset}
+              onChange={setOffset}
+            />
             {chordCount ? (
               <button
                 onClick={() => setShowChords((v) => !v)}
@@ -482,7 +494,14 @@ export default function SongDetailPage() {
             ) : null}
           </div>
         </div>
-        <ChordLyrics lyrics={song.lyrics} showChords={showChords && hasChords(song.lyrics)} />
+        <ChordLyrics
+          lyrics={
+            offset
+              ? transposeLyrics(song.lyrics ?? '', offset, transposeKey(song.original_key ?? '', offset))
+              : song.lyrics
+          }
+          showChords={showChords && hasChords(song.lyrics)}
+        />
       </Card>
 
       {/* sheets */}

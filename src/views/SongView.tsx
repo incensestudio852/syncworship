@@ -13,6 +13,7 @@ import { useRealtimeChannel, type ConnStatus } from '@/hooks/useRealtimeChannel'
 import { Button, Spinner } from '@/components/ui';
 import { hasChords } from '@/lib/chords';
 import { transposeKey, transposeLyrics } from '@/lib/transpose';
+import { TransposeControl } from '@/components/TransposeControl';
 
 export default function SongViewPage() {
   const search = useSearchParams();
@@ -118,45 +119,11 @@ export default function SongViewPage() {
           <div className="flex items-center gap-2.5">
             <h1 className="min-w-0 flex-1 truncate text-xl font-semibold">{song.title}</h1>
 
-            {sungKey ? (
-              <div className="flex shrink-0 items-center gap-1.5">
-                <span className="rounded-md bg-[var(--soft)] px-2 py-0.5 font-mono text-sm font-semibold text-[var(--accent)]">
-                  {sungKey}
-                </span>
-                {offset !== 0 ? (
-                  <span className="font-mono text-[11px] text-[var(--muted-fg)]">{baseKey}</span>
-                ) : null}
-
-                <div className="flex items-center rounded-lg border border-[var(--border)]">
-                  <button
-                    onClick={() => setOffset((v) => v - 1)}
-                    aria-label="降半音"
-                    className="grid h-8 w-8 place-items-center rounded-l-lg text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--accent)]"
-                  >
-                    −
-                  </button>
-                  <span className="min-w-7 text-center font-mono text-[11px] tabular-nums text-[var(--muted-fg)]">
-                    {offset > 0 ? `+${offset}` : offset}
-                  </span>
-                  <button
-                    onClick={() => setOffset((v) => v + 1)}
-                    aria-label="升半音"
-                    className="grid h-8 w-8 place-items-center rounded-r-lg text-[var(--muted-fg)] hover:bg-[var(--soft)] hover:text-[var(--accent)]"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {offset !== 0 ? (
-                  <button
-                    onClick={() => setOffset(0)}
-                    className="rounded-full px-1.5 py-0.5 text-[11px] text-[var(--muted-fg)] underline underline-offset-2 hover:text-[var(--accent)]"
-                  >
-                    還原
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
+            <TransposeControl
+              baseKey={baseKey}
+              offset={offset}
+              onChange={setOffset}
+            />
           </div>
 
           <div className="mb-3 mt-1 flex items-center gap-2 text-xs text-[var(--muted-fg)]">
