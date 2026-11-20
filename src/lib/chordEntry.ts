@@ -307,7 +307,7 @@ export function insertChordBlock(
   const selected = text.slice(start, end);
   const after = text.slice(end);
   const lead = before.length === 0 || before.endsWith('\n') ? '' : '\n';
-  const body = selected || '\nAm        G\nKarma police';
+  const body = selected || '\nG           Bm\n愛是基督教我愛';
   const block = `${CHORD_BLOCK_FENCE}\n${body.replace(/^\n/, '')}\n\`\`\`\n`;
   const next = before + lead + block + after;
   return { text: next, caret: before.length + lead.length + CHORD_BLOCK_FENCE.length + 1 };

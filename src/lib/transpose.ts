@@ -94,7 +94,41 @@ export function transposeLyrics(lyrics: string, semitones: number, targetKey = '
   if (!semitones || !lyrics) return lyrics;
   const flats = prefersFlats(targetKey, lyrics);
 
-  return lyrics.replace(/\[([^\]]+)\]/g, (whole, chord: string) => {
+  // First pass: aligned ```` ```chords ```` blocks. Their chords carry no
+  // brackets, so the inline replace below would never see them — a song read
+  // in view mode would keep its block chords in the original key while the
+  // inline chords moved. Columns are preserved by transpoting each whitespace-
+  // separated token in place.
+  const withBlocks = lyrics.replace(/(```chords\b[^\n]*\n)([\s\S]*?)(```)/gi, (_w, open, body: string, close) => {
+    const transpoted = body
+      .split('\n')
+      .map((line) => {
+        // Leave lyric rows untouched: only a line made entirely of chord
+        // tokens is a chord row.
+        const parts = line.split(/(\s+)/); // keep whitespace as tokens
+        const words = parts.filter((t) => t.trim());
+        const allChords = words.length > 0 && words.every((w) => looksLikeChord(w));
+        if (!allChords) return line;
+        return parts
+          .map((t) => {
+            if (!t.trim()) return t;
+            const m = t.match(/^([A-G][#b]?)([^/]*)(?:\/([A-G][#b]?))?$/);
+            if (!m || !(m[1] in PITCH)) return t;
+            const [, root, rest, bass] = m;
+            const newRoot = spell(PITCH[root] + semitones, flats);
+            const newBass = bass && bass in PITCH ? '/' + spell(PITCH[bass] + semitones, flats) : '';
+            // Pad back to the original width so columns stay aligned even when
+            // the new chord name is shorter or longer.
+            const next = `${newRoot}${rest}${newBass}`;
+            return next.padEnd(t.length, ' ');
+          })
+          .join('');
+      })
+      .join('\n');
+    return open + transpoted + close;
+  });
+
+  return withBlocks.replace(/\[([^\]]+)\]/g, (whole, chord: string) => {
     const token = chord.trim();
     // Section markers ([Chorus], [Verse], [Bridge]) must survive untouched.
     if (!looksLikeChord(token)) return whole;
