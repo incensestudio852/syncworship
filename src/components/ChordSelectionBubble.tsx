@@ -42,7 +42,25 @@ export function ChordSelectionBubble({
     if (!el) return;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
-    if (!w || !h) return;
+    // A zero measurement means layout has not settled yet (the bubble is
+    // freshly mounted inside a flex row). Bailing here used to strand the
+    // bubble at `visibility: hidden` forever, because `pos` never reset and
+    // the effect only re-runs when `anchor` identity changes. Re-measure on
+    // the next frame instead.
+    if (!w || !h) {
+      const raf = requestAnimationFrame(() => {
+        const node = ref.current;
+        if (!node) return;
+        const w2 = node.offsetWidth;
+        const h2 = node.offsetHeight;
+        if (!w2 || !h2) return;
+        const vw2 = window.innerWidth;
+        const left2 = Math.min(Math.max(8, anchor.x - w2), Math.max(8, vw2 - w2 - 8));
+        const top2 = Math.max(8, anchor.y - h2 - 10);
+        setPos({ left: left2, top: top2 });
+      });
+      return () => cancelAnimationFrame(raf);
+    }
     const vw = window.innerWidth;
     // Right-align to the selection, then clamp into [8, vw - w - 8].
     const left = Math.min(Math.max(8, anchor.x - w), Math.max(8, vw - w - 8));

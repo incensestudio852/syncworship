@@ -147,6 +147,10 @@ export function LyricsEditor({
         onChange={(e) => onChange(e.target.value)}
         onSelect={syncSelection}
         onKeyUp={syncSelection}
+        // `onSelect` alone misses mouse drags in some browsers; mouseup and
+        // touchend are the reliable commit points for a handle/drag selection.
+        onMouseUp={syncSelection}
+        onTouchEnd={syncSelection}
         rows={rows}
         placeholder={'和弦寫在音節前：[G]奇異恩典 [C]何等甘[G]甜\n用上方的和弦列，或直接輸入 [G]'}
         className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 font-mono text-[13px] leading-relaxed outline-none focus:border-[var(--accent)]"
