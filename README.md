@@ -40,7 +40,7 @@ Sync Worship replaces the stack. One person builds the list, everyone else reads
 
 ## Screens
 
-**Stage** — the view the musician actually reads. Oversized lyrics, chords above the syllables, a section counter, and the next transition at the bottom.
+**Stage** — the view the musician actually reads. Legible lyrics, chords above the syllables, a section counter, and the next transition at the bottom.
 
 **List detail** — the order, with each song's key and flow. This is where the leader works before the service starts.
 
