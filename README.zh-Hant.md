@@ -168,4 +168,8 @@ Next.js（靜態匯出）· Supabase（Postgres、Auth、Storage、Realtime）·
 
 MIT，見 [LICENSE](LICENSE)。
 
+---
+
+Sync Worship 免費，也會一直免費。如果它替你的團隊省下一個主日早上的忙亂，歡迎請我喝杯咖啡。
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E2V52B1CCI)

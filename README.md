@@ -176,4 +176,8 @@ Issues and pull requests are welcome. There is no support commitment — this is
 
 MIT. See [LICENSE](LICENSE).
 
+---
+
+Sync Worship is free, and it stays free. If it saves your team some scrambling on a Sunday morning, you are welcome to buy me a coffee.
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E2V52B1CCI)
