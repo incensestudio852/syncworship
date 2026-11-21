@@ -170,6 +170,6 @@ MIT，見 [LICENSE](LICENSE)。
 
 ---
 
-Sync Worship 免費，也會一直免費。如果它替你的團隊省下一個主日早上的忙亂，歡迎請我喝杯咖啡。
+Sync Worship 免費，也會一直免費 :D。如果你覺得 Sync Worship 都OK好用，或許能替你的團隊省下一些忙亂，歡迎請我飲杯咖啡。
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E2V52B1CCI)
