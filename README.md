@@ -126,7 +126,21 @@ npm run build    # static export to out/
 npm run deploy   # build + wrangler deploy
 ```
 
-`DEPLOY.md` covers the Cloudflare side in full.
+### Where it runs
+
+The reference deployment is **Supabase** (database, auth, storage, realtime) plus
+**Cloudflare Workers** serving the static build — that combination is what the
+author runs, and `DEPLOY.md` documents it step by step.
+
+Cloudflare is not required. The build is a plain static export, so it also runs on
+Netlify, Vercel, GitHub Pages, nginx, or a box on the church network. Two things
+are Cloudflare-specific and are only needed for the share-link preview cards: the
+`worker.ts` router and the `functions/` edge handlers. Without them the app works
+normally, minus the social preview images. `DEPLOY.md` lists what to change.
+
+What you cannot skip is Supabase. The app has no server of its own — there is no
+API layer to substitute, so the Postgres database, auth, and storage bucket all
+have to exist somewhere.
 
 **Two things that will trip you up:**
 

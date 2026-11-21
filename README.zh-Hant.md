@@ -126,7 +126,13 @@ npm run build    # 靜態匯出到 out/
 npm run deploy   # 建置後 wrangler deploy
 ```
 
-Cloudflare 那一邊的細節，`DEPLOY.md` 寫得完整。
+### 跑在哪裡
+
+作者自己在用的是 **Supabase**（資料庫、登入、儲存、即時同步）加 **Cloudflare Workers** 提供靜態檔案，`DEPLOY.md` 把這條路逐步寫清楚。
+
+Cloudflare 不是必需的。建置結果就是一組靜態檔案，放上 Netlify、Vercel、GitHub Pages、nginx，或者教會內網的一台機器都可以。只有兩樣東西綁住 Cloudflare，而且只為了分享連結的預覽圖：`worker.ts` 的路由，以及 `functions/` 的邊緣處理。少了它們，應用照常運作，只是沒有社群預覽圖。要改哪些地方，`DEPLOY.md` 有列。
+
+不能跳過的是 Supabase。這個應用沒有自己的伺服器——沒有 API 層可以替換，所以 Postgres、登入、儲存桶都得各自存在。
 
 **兩個容易踩到的坑：**
 
