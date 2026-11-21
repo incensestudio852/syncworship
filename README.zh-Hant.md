@@ -134,7 +134,7 @@ Next.js（靜態匯出）· Supabase（Postgres、Auth、Storage、Realtime）·
 
 應用程式中的示範和弦譜來自 **原始和聲 Raw Harmony**，他們的和弦譜公開於 [rawharmony.hk/chords](https://www.rawharmony.hk/chords)。多謝他們無償公開。
 
-如果這些詩歌對你有幫助，**支持詩歌創作，歡迎按感動奉獻。**
+如果這些詩歌對你有幫助，**支持詩歌創作，歡迎按感動奉獻給作者們。**
 
 ## 截圖
 

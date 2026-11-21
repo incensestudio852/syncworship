@@ -134,7 +134,7 @@ Deliberate constraints: 10 MB upload cap, 1100 px WebP output, 30 page PDF limit
 
 The chord arrangement used as the sample in the app comes from **原始和聲 Raw Harmony**, whose chord sheets are public at [rawharmony.hk/chords](https://www.rawharmony.hk/chords). Thank you for making them freely available.
 
-If these songs have been useful to you, **支持詩歌創作，歡迎按感動奉獻** — please consider supporting their work.
+If these songs have been useful to you, **支持詩歌創作，歡迎按感動奉獻給作者們** — please consider supporting the people who wrote them.
 
 ## Screenshots
 
