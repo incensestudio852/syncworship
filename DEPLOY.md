@@ -38,8 +38,8 @@ out/
    - **Node version:** set env var `NODE_VERSION` = `20` (or 22)
 4. **Environment variables** (Production *and* Preview):
    ```
-   NEXT_PUBLIC_SUPABASE_URL       = https://lbhaqrneluvexzhlbckk.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY  = sb_publishable_d2aq8qQiu2cNhSr4jBmS-w_opW4D91x
+   NEXT_PUBLIC_SUPABASE_URL       = https://<your-project-ref>.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY  = <your publishable / anon key>
    ```
 5. Save and Deploy.
 

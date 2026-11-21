@@ -314,7 +314,10 @@ export function insertChordBlock(
   const selected = text.slice(start, end);
   const after = text.slice(end);
   const lead = before.length === 0 || before.endsWith('\n') ? '' : '\n';
-  const body = selected || '\nG      Bm\n愛是基督教我愛';
+  // Sample chord arrangement from 原始和聲 Raw Harmony, used with thanks.
+  // Their chord sheets are public: https://www.rawharmony.hk/chords
+  // 支持詩歌創作，歡迎按感動奉獻。
+  const body = selected || '\nD   E  A    E/G# F#m\n往深海踏出去 放低一切顧慮';
   const block = `${CHORD_BLOCK_FENCE}\n${body.replace(/^\n/, '')}\n\`\`\`\n`;
   const next = before + lead + block + after;
   return { text: next, caret: before.length + lead.length + CHORD_BLOCK_FENCE.length + 1 };
