@@ -38,15 +38,27 @@ Sync Worship replaces the stack. One person builds the list, everyone else reads
 5. **Open the list on stage.** Tap 推送 (push) and the current song appears on every device.
 6. **Transpose as needed.** Each screen can move the key up or down without affecting anyone else.
 
-## Screens
+## Transpose without touching the chart
 
-**Stage** — the view the musician actually reads. Legible lyrics, chords above the syllables, a section counter, and the next transition at the bottom.
+![Transpose control](docs/shot-transpose.png)
 
-**List detail** — the order, with each song's key and flow. This is where the leader works before the service starts.
+Every display carries its own semitone stepper. The sounding key shows in the corner with the written key beside it, so a guitarist reading a transposed screen still knows what the sheet says. Nothing is written back: one person's transposition never moves anyone else's screen.
 
-**Library** — every song, searchable by title, lyrics, or tag.
+## Build the flow, not just the setlist
 
-**Song editor** — the chord entry surface: inline `[G]` syntax, aligned chord blocks, section labels, and a desktop chord panel.
+![Flow builder](docs/shot-flow.png)
+
+A list is more than an order. Each song carries its arrangement — which sections, how many passes, how loud, and the remark the band needs to see — and the transition sits between songs: a pad underneath, a direct modulation, a seamless join into the next key.
+
+## Write chords where they land
+
+![Lyrics editor](docs/shot-editor.png)
+
+Type the chord before the syllable it lands on. Chords go in square brackets, so the same field holds lyrics, chords, and section labels. On a desktop a panel sits beside the field with every chord in the current key; select a word and a toolbar appears above it; on a phone the toolbar sits above the field instead.
+
+## The rest of the app
+
+The four panels in [`docs/`](docs) walk through the whole thing end to end — overview, lists, library, stage.
 
 ---
 
@@ -135,10 +147,6 @@ Deliberate constraints: 10 MB upload cap, 1100 px WebP output, 30 page PDF limit
 The chord arrangement used as the sample in the app comes from **原始和聲 Raw Harmony**, whose chord sheets are public at [rawharmony.hk/chords](https://www.rawharmony.hk/chords). Thank you for making them freely available.
 
 If these songs have been useful to you, **支持詩歌創作，歡迎按感動奉獻給作者們** — please consider supporting the people who wrote them.
-
-## Screenshots
-
-The four images in [`docs/`](docs) walk through the app: overview, lists, library, and stage.
 
 ## Content and copyright
 

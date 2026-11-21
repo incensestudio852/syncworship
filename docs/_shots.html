@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f4f1ea; --card:#fff; --soft:#e9f4ff; --fg:#101820; --muted-fg:#6d7378;
+  --border:#d6d6d6; --accent:#0066cc; --accent-soft:#dbeafe; --live:#c2410c;
+  --live-soft:#fde8dc; --hover:#eef4fb; --field:#f7f6f2; --chord:#0066cc;
+  --font-sans:"PingFang TC","Noto Sans TC",system-ui,sans-serif;
+  --font-mono:"SF Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;border:0 solid var(--border);margin:0;padding:0}
+html{background:#dcd7cc}
+body{font-family:var(--font-sans);color:var(--fg);-webkit-font-smoothing:antialiased}
+
+.shot{width:1200px;background:var(--bg);padding:36px 40px 40px}
+.title{font-size:27px;font-weight:700;letter-spacing:-.01em}
+.sub{margin-top:6px;font-size:14px;color:var(--muted-fg)}
+.rule{height:1px;background:var(--border);margin:22px 0 24px}
+
+/* card primitive: rounded, no hard shadow */
+.card{background:var(--card);border:1px solid var(--border);border-radius:24px}
+
+/* ── transpose ─────────────────────────────────────────── */
+.tp-row{display:flex;align-items:center;gap:10px}
+.tp-title{min-width:0;flex:1;font-size:21px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-group{display:flex;flex-shrink:0;align-items:center;gap:6px}
+.key-pill{border-radius:6px;background:var(--soft);padding:2px 8px;
+  font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--accent)}
+.written{font-family:var(--font-mono);font-size:11px;color:var(--muted-fg)}
+.stepper{display:flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.stepper button{display:grid;place-items:center;height:32px;width:32px;background:none;
+  font-size:15px;color:var(--muted-fg);cursor:pointer}
+.stepper .n{min-width:28px;text-align:center;font-family:var(--font-mono);
+  font-size:11px;color:var(--muted-fg);font-variant-numeric:tabular-nums}
+.reset{background:none;border-radius:999px;padding:2px 6px;font-size:11px;
+  color:var(--muted-fg);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+
+/* chord lyrics */
+.lyrics{margin-top:18px}
+.line{display:flex;flex-wrap:wrap;align-items:flex-end;line-height:1.3;margin-bottom:4px;column-gap:2px}
+.chord-seg{display:inline-flex;flex-direction:column;align-items:flex-start}
+.chord-name{font-family:var(--font-mono);color:var(--chord);white-space:pre;
+  letter-spacing:-.02em;min-height:1.15em;font-size:.78em;font-weight:600;line-height:1.15}
+.chord-text{white-space:pre-wrap;line-height:1.55;font-size:19px}
+.section{display:inline-block;border-radius:6px;background:color-mix(in srgb,var(--accent) 10%,transparent);
+  padding:2px 8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--accent);margin:12px 0 6px}
+
+/* ── flow builder ──────────────────────────────────────── */
+.list-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.li-title{font-size:15px;font-weight:700}
+.li-meta{font-size:11px;color:var(--muted-fg);margin-top:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border-radius:999px;font-size:12px;font-weight:600;padding:8px 14px;cursor:pointer}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{border:1px solid var(--border);background:var(--card);color:var(--fg)}
+.btn-live{background:var(--live);color:#fff}
+.song{border-bottom:1px solid var(--border);padding:12px 16px}
+.song-row{display:flex;align-items:center;gap:10px}
+.num{width:18px;font-family:var(--font-mono);font-size:11px;color:var(--muted-fg)}
+.song-title{font-size:13.5px;font-weight:600;flex:1}
+.chip{border-radius:999px;border:1px solid var(--border);padding:2px 8px;
+  font-family:var(--font-mono);font-size:11px;color:var(--fg)}
+.chip-key{border-radius:6px;background:var(--soft);color:var(--accent);font-weight:600;border-color:transparent}
+.flow{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 0 28px}
+.fchip{border-radius:6px;background:var(--soft);padding:2px 7px;font-size:11px;
+  font-weight:600;color:var(--accent);font-family:var(--font-mono)}
+.fchip .c{color:var(--muted-fg);font-weight:500;margin-left:3px}
+.note{margin:8px 0 0 28px;font-size:11.5px;color:var(--muted-fg)}
+.transition{margin:9px 0 0 28px;border-left:2px solid var(--accent);
+  padding-left:8px;font-size:11px;color:var(--accent)}
+
+/* ── lyrics editor ─────────────────────────────────────── */
+.ed-wrap{display:flex;align-items:flex-start;gap:16px;padding:16px}
+.ed-col{min-width:0;flex:1}
+.label{font-size:11px;color:var(--muted-fg);margin-bottom:6px}
+.toolbar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.tb{border-radius:6px;border:1px solid var(--border);background:var(--card);
+  padding:3px 8px;font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--fg)}
+.tb-sect{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.ta{width:100%;border:1px solid var(--border);border-radius:12px;background:var(--card);
+  padding:12px;font-family:var(--font-mono);font-size:13px;line-height:1.6;color:var(--fg);
+  white-space:pre-wrap;min-height:250px}
+.ta .sec{color:var(--accent);font-weight:600}
+.ta .ch{color:var(--chord);font-weight:600}
+.ta .sel{background:#c8955a4d}
+.hint{margin-top:6px;font-size:11px;color:var(--muted-fg);display:flex;gap:12px}
+.hint u{text-underline-offset:2px;cursor:pointer}
+.panel{width:196px;flex-shrink:0;border:1px solid var(--border);border-radius:24px;background:var(--card);padding:12px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.panel-h{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-fg)}
+.key-sel{border-radius:8px;border:1px solid var(--border);padding:1px 6px;
+  font-family:var(--font-mono);font-size:11px;font-weight:600}
+.chords{display:flex;flex-wrap:wrap;gap:4px}
+.cbtn{min-height:32px;border-radius:999px;border:1px solid var(--border);
+  padding:0 10px;font-family:var(--font-mono);font-size:12px;font-weight:600;background:var(--card)}
+.cbtn-active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.panel-foot{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;
+  font-size:10.5px;color:var(--muted-fg);line-height:1.4}
+.bubble{position:absolute;display:flex;align-items:center;gap:2px;background:#fff;
+  border:1px solid var(--border);border-radius:12px;padding:4px;
+  box-shadow:0 10px 15px -3px rgb(0 0 0 / .1),0 4px 6px -4px rgb(0 0 0 / .1)}
+.bubble .cbtn{min-height:28px;border:0;background:var(--accent-soft);color:var(--accent)}
+.rel{position:relative}
+</style></head><body>
+
+<!-- ═══════════ SHOT 1 — TRANSPOSE ═══════════ -->
+<div class="shot" id="shot-transpose">
+  <div class="title">Transpose without touching the chart</div>
+  <div class="sub">Every screen carries its own semitone stepper. The sounding key shows in the corner, the written key stays beside it — so nobody loses track of what the sheet actually says.</div>
+  <div class="rule"></div>
+
+  <div class="card" style="padding:20px 22px">
+    <div class="tp-row">
+      <div class="tp-title">往深海踏出去</div>
+      <div class="tp-group">
+        <span class="key-pill">A</span>
+        <span class="written">D</span>
+        <div class="stepper">
+          <button>−</button>
+          <span class="n">+2</span>
+          <button>+</button>
+        </div>
+        <button class="reset">還原</button>
+      </div>
+    </div>
+
+    <div class="lyrics">
+      <span class="section">Verse</span>
+      <div class="line"><span class="chord-seg"><span class="chord-name">A</span><span class="chord-text">往深海踏出去&#160;&#160;</span></span><span class="chord-seg"><span class="chord-name">D</span><span class="chord-text">放低一切顧慮</span></span></div>
+      <div class="line"><span class="chord-seg"><span class="chord-name">F#m</span><span class="chord-text">你聲音&#160;&#160;</span></span><span class="chord-seg"><span class="chord-name">D</span><span class="chord-text">叫我不要怕</span></span></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-top:16px">
+    <div class="card" style="flex:1;padding:14px 16px">
+      <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-fg)">Written</div>
+      <div style="font-family:var(--font-mono);font-size:12px;margin-top:4px;color:var(--fg)">D   E  A    E/G# F#m</div>
+    </div>
+    <div class="card" style="flex:1;padding:14px 16px">
+      <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-fg)">Sounding (+2)</div>
+      <div style="font-family:var(--font-mono);font-size:12px;margin-top:4px;color:var(--accent);font-weight:600">E   F#  B    F#/A# G#m</div>
+    </div>
+    <div class="card" style="flex:1.2;padding:14px 16px">
+      <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-fg)">Per device</div>
+      <div style="font-size:11.5px;margin-top:4px;line-height:1.4;color:var(--muted-fg)">Never written back. No one else's screen moves.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SHOT 2 — FLOW BUILDER ═══════════ -->
+<div class="shot" id="shot-flow">
+  <div class="title">Build the flow, not just the setlist</div>
+  <div class="sub">Each song carries its own arrangement: which sections, how many times, how loud, and what remark the band needs to see. The next transition sits between songs.</div>
+  <div class="rule"></div>
+
+  <div class="card" style="overflow:hidden">
+    <div class="list-head">
+      <div>
+        <div class="li-title">主日崇拜 · 11月23日</div>
+        <div class="li-meta">主領 Caleb · 3 首 · 約 18 分鐘</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost">分享</button>
+        <button class="btn btn-live">推送</button>
+      </div>
+    </div>
+
+    <div class="song">
+      <div class="song-row">
+        <span class="num">1</span>
+        <span class="song-title">往深海踏出去</span>
+        <span class="chip chip-key">A</span>
+        <span class="chip">72 BPM</span>
+      </div>
+      <div class="flow">
+        <span class="fchip">Intro<span class="c">×1</span></span>
+        <span class="fchip">V1<span class="c">×1</span></span>
+        <span class="fchip">C<span class="c">×2</span></span>
+        <span class="fchip">Bridge<span class="c">×1</span></span>
+        <span class="fchip">C<span class="c">×2</span></span>
+      </div>
+      <div class="note">注意：第二次副歌收細聲</div>
+      <div class="transition">接 Pad 鋪底 · 無縫連接下一首</div>
+    </div>
+
+    <div class="song">
+      <div class="song-row">
+        <span class="num">2</span>
+        <span class="song-title">恩典之路</span>
+        <span class="chip chip-key">G</span>
+        <span class="chip">68 BPM</span>
+      </div>
+      <div class="flow">
+        <span class="fchip">Intro<span class="c">×1</span></span>
+        <span class="fchip">V1<span class="c">×1</span></span>
+        <span class="fchip">C<span class="c">×2</span></span>
+        <span class="fchip">自由敬拜</span>
+      </div>
+      <div class="transition">接 直接轉調 · 升半音進副歌</div>
+    </div>
+
+    <div class="song" style="border-bottom:0">
+      <div class="song-row">
+        <span class="num">3</span>
+        <span class="song-title">三一神</span>
+        <span class="chip chip-key">G</span>
+        <span class="chip">76 BPM</span>
+      </div>
+      <div class="flow">
+        <span class="fchip">V1<span class="c">×1</span></span>
+        <span class="fchip">C<span class="c">×3</span></span>
+        <span class="fchip">Tag<span class="c">×1</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SHOT 3 — LYRICS EDITOR ═══════════ -->
+<div class="shot" id="shot-editor">
+  <div class="title">Write chords where they land</div>
+  <div class="sub">Type the chord before the syllable. On desktop a panel sits beside the field with every chord in the current key; select a word and a toolbar appears above it.</div>
+  <div class="rule"></div>
+
+  <div class="card">
+    <div class="ed-wrap">
+      <div class="ed-col">
+        <div class="label">歌詞（可含和弦 [G]　段落 [Verse] 標籤　或 ```chords 區塊）</div>
+        <div class="toolbar">
+          <span class="tb">A</span><span class="tb">D</span><span class="tb">F#m</span><span class="tb">E</span><span class="tb">Bm</span><span class="tb">C#m</span>
+          <span class="tb tb-sect">Verse</span><span class="tb tb-sect">Chorus</span><span class="tb tb-sect">Bridge</span><span class="tb tb-sect">Tag</span>
+        </div>
+        <div class="ta rel"><span class="sec">[Verse]</span>
+<span class="ch">[A]</span>往深海踏出去 <span class="ch">[D]</span>放低一切顧慮
+<span class="ch">[F#m]</span>你聲音叫我不要怕 <span class="ch">[E]</span>我仍要跟隨
+
+<span class="sec">[Chorus]</span>
+<span class="ch">[A]</span>我要往深海踏出去 <span class="ch">[E]</span>因你已先走
+
+<span class="ch">```chords</span>
+D   E  A    E/G# F#m
+往深海踏出去 放低一切顧慮
+<span class="ch">```</span></div>
+        <div class="hint"><span>選取文字可直接加上和弦。</span><u>或插入和弦區塊</u></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-h">和弦</span>
+          <span class="key-sel">A ▾</span>
+        </div>
+        <div class="chords">
+          <button class="cbtn">A</button><button class="cbtn">Bm</button><button class="cbtn">C#m</button><button class="cbtn">D</button>
+          <button class="cbtn">E</button><button class="cbtn">F#m</button><button class="cbtn">E/G#</button><button class="cbtn">Bm7</button>
+          <button class="cbtn">C#m7</button><button class="cbtn">Dmaj7</button><button class="cbtn">E7</button><button class="cbtn">A/C#</button>
+        </div>
+        <div class="panel-foot">點一下和弦，插入到游標位置。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body></html>
