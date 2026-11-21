@@ -99,7 +99,9 @@ cd syncworship
 npm install
 ```
 
-依序執行 `supabase/steps/` 內的 SQL。然後設定：
+打開 Supabase 的 SQL editor，把整份 **`supabase/setup.sql`** 貼上執行。這份檔案可以重複執行，想再跑一次也沒問題。跑完會列出它建立的資料表與函式，讓你確認成功。
+
+然後設定：
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
@@ -117,7 +119,8 @@ Cloudflare 那一邊的細節，`DEPLOY.md` 寫得完整。
 **兩個容易踩到的坑：**
 
 - 本專案是**靜態匯出**。沒有伺服器執行環境，沒有 API route，沒有 middleware。需要伺服器的東西放在 `functions/` 或 `worker.ts`，是獨立的一層。
-- `pg_cron` 那一步是可選的，預設沒有啟用。不啟用，三個月的舊譜自動清除就不會執行。而且若你的專案根本沒有 `pg_cron`，照順序跑會中斷，除非你就是要用它，否則跳過該步。
+- `pg_cron` 是可選的。setup 檔會先檢查，沒有就印出提示，不會中斷。沒有它，三個月的舊清單自動清除不會執行，其餘功能照常。
+- `supabase/steps/` 內的編號檔案是原本的逐步紀錄。你不需要它們；`setup.sql` 就是那些檔案合併、並改成可重複執行的版本。
 
 ## 技術
 
@@ -132,6 +135,20 @@ Next.js（靜態匯出）· Supabase（Postgres、Auth、Storage、Realtime）·
 應用程式中的示範和弦譜來自 **原始和聲 Raw Harmony**，他們的和弦譜公開於 [rawharmony.hk/chords](https://www.rawharmony.hk/chords)。多謝他們無償公開。
 
 如果這些詩歌對你有幫助，**支持詩歌創作，歡迎按感動奉獻。**
+
+## 截圖
+
+[`docs/`](docs) 內四張圖依序展示：總覽、清單、詩歌庫、舞台。
+
+## 內容與版權
+
+本儲存庫**不含任何歌詞與和弦譜**。原始碼中唯一的樂譜片段，是上方鳴謝的原始和聲那兩行示範，用途是讓對齊區塊的語法有個可運作的例子。
+
+你自己部署時上傳的內容，由你自己負責。歌詞與和弦譜通常有版權，教會一般會以 CCLI 之類的授權處理，正是為此。本專案不對此表態，也無法授予它並不持有的授權。**你上傳的內容，責任在你。**
+
+## 支援
+
+歡迎開 issue 與 pull request。但沒有支援承諾——這是作者自己在用的工具，順便分享出來。
 
 ## 授權
 

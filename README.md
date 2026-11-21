@@ -99,7 +99,9 @@ cd syncworship
 npm install
 ```
 
-Run the SQL in `supabase/steps/` in order against your Supabase project. Then set:
+Open your Supabase SQL editor, paste the whole of **`supabase/setup.sql`**, and run it. It is idempotent — run it again whenever you like. It ends by listing the tables and functions it created, so you can see it worked.
+
+Then set:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
@@ -117,7 +119,8 @@ npm run deploy   # build + wrangler deploy
 **Two things that will trip you up:**
 
 - The app is a **static export**. There is no server runtime, no API routes, no middleware. Anything that needs a server lives in `functions/` or `worker.ts` as a separate edge layer.
-- The `pg_cron` step is optional and not enabled by default. Without it, the three-month cleanup of old sheets does not run. It will also abort a fresh sequential setup if `pg_cron` is missing, so skip that step unless you want it.
+- `pg_cron` is optional. The setup file checks for it and prints a notice if it is missing rather than failing. Without it, the three-month cleanup of old lists never runs — everything else works.
+- The numbered files in `supabase/steps/` are the original incremental history. You do not need them; `setup.sql` is those files merged and made re-runnable.
 
 ## Tech
 
@@ -132,6 +135,20 @@ Deliberate constraints: 10 MB upload cap, 1100 px WebP output, 30 page PDF limit
 The chord arrangement used as the sample in the app comes from **原始和聲 Raw Harmony**, whose chord sheets are public at [rawharmony.hk/chords](https://www.rawharmony.hk/chords). Thank you for making them freely available.
 
 If these songs have been useful to you, **支持詩歌創作，歡迎按感動奉獻** — please consider supporting their work.
+
+## Screenshots
+
+The four images in [`docs/`](docs) walk through the app: overview, lists, library, and stage.
+
+## Content and copyright
+
+This repository contains **no song lyrics and no chord sheets**. The only arrangement that appears anywhere in the source is a two-line sample from Raw Harmony, credited above, used so the chord-block syntax has a working example.
+
+Anything you upload to your own deployment is yours to account for. Lyrics and chord sheets are usually somebody's copyright. Churches typically rely on a licence such as CCLI for exactly this reason. This project takes no position on that and cannot grant permissions it does not hold. **You are responsible for the content you upload.**
+
+## Support
+
+Issues and pull requests are welcome. There is no support commitment — this is a tool its author uses, shared in case it helps someone else.
 
 ## License
 

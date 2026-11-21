@@ -32,3 +32,7 @@ public/tesseract-core/
 
 # Wrangler local dev cache (miniflare state, never source)
 .wrangler/
+
+# Build-time Supabase config: set on Cloudflare, never commit.
+# Kept locally so `npm run build` works on this machine.
+.env.production
